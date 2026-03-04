@@ -1,1 +1,8 @@
 .$diagrams.drawio.bkp
+
+# backend (Encore)
+backend/.encore
+backend/encore.gen
+backend/node_modules
+backend/encore.gen.go
+backend/encore.gen.cue
