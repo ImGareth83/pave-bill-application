@@ -1,0 +1,210 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/27.0.9 Chrome/134.0.6998.205 Electron/35.4.0 Safari/537.36" version="27.0.9">
+  <diagram name="Requirements" id="fFUWejVa0wBGRKLu57pT">
+    <mxGraphModel dx="2066" dy="789" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="A-AWsdNGFQl8dZKRZUvq-1" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;Function Requirement&lt;/h1&gt;&lt;p&gt;&lt;b&gt;1. Create a Bill&lt;/b&gt;&lt;/p&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;&lt;b&gt;2.&amp;nbsp;Add line item to an Open Bill&lt;/b&gt;&lt;/p&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;&lt;b&gt;3. Reject line item if Bill is Closed or Completed&lt;/b&gt;&lt;/p&gt;&lt;p&gt;i.e. Condition: bill.status == CLOSED, Then Reject line item addition - 400 BillClosed&lt;/p&gt;&lt;p&gt;&lt;b&gt;4. Close an active Bill&lt;/b&gt;&lt;/p&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;&lt;b style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;5. Calculate total Bill Amount&lt;/b&gt;&lt;/p&gt;&lt;p&gt;The system can provide a total bill amount based on the existing line items.&lt;/p&gt;&lt;p&gt;i.e. total amount = SUM(lineItem.Amount)&amp;nbsp;&lt;/p&gt;&lt;p&gt;&lt;b&gt;6. Return all line items of a bill&lt;/b&gt;&lt;/p&gt;&lt;p&gt;&lt;b style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;7. Query bills (open, closed and by ID)&lt;/b&gt;&lt;/p&gt;&lt;pre data-end=&quot;2593&quot; data-start=&quot;2563&quot; class=&quot;overflow-visible! px-0!&quot;&gt;&lt;div class=&quot;relative w-full my-4&quot;&gt;&lt;div class=&quot;&quot;&gt;&lt;div class=&quot;relative&quot;&gt;&lt;div class=&quot;&quot;&gt;&lt;div class=&quot;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/pre&gt;&lt;p&gt;&lt;b&gt;8. Support multiple currencies (i.e. GEL &amp;amp; USD)&lt;/b&gt;&lt;/p&gt;&lt;p&gt;&lt;b&gt;9. Accrue fees progressively during billing period&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Fees (or line items) accumulate during bill period. I.e. user can add a premium feature with 1-month billing cycle.&amp;nbsp;&lt;/p&gt;&lt;p&gt;Total amount will increase.&amp;nbsp;&lt;/p&gt;&lt;p&gt;&lt;b&gt;10. Billing Period workflow&lt;/b&gt;&lt;/p&gt;&lt;p&gt;At the start:&lt;/p&gt;&lt;p&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;billing opens and workflow starts&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;During the period:&lt;/p&gt;&lt;p&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;line items added&lt;/li&gt;&lt;li&gt;fees accrue&lt;/li&gt;&lt;/ul&gt;&lt;div&gt;At the end:&lt;/div&gt;&lt;div&gt;&lt;ul&gt;&lt;li&gt;bill closed&lt;/li&gt;&lt;li&gt;invoice available.&amp;nbsp;&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;&lt;p&gt;&lt;/p&gt;&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;Non-Function Requirement&lt;/h1&gt;&lt;div&gt;1. Monetary precision&lt;/div&gt;&lt;div&gt;&lt;b&gt;Requirement: Money calculations must be precise and deterministic.&amp;nbsp;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Use integer type and s&lt;/span&gt;tore GEL and USD as cents. I.e. 10.25 USD -&amp;gt; 1025 cents.&amp;nbsp;&lt;/div&gt;&lt;div&gt;Arithmetic operations are done in integers and converted to decimals for display.&amp;nbsp;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;2. Date consistency&lt;/div&gt;&lt;div&gt;A bill cannot reach an invalid state. i.e. closed bill with new line items, negative total, and currency mismatch.&lt;/div&gt;&lt;div&gt;&lt;b&gt;Requirement:&amp;nbsp;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;ul&gt;&lt;li&gt;A closed bill must be immutable - is un-editable&lt;/li&gt;&lt;li&gt;Line items cannot be added after closing&lt;/li&gt;&lt;li&gt;Total must match the sum of line items.&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;3. Idempotency&lt;/span&gt;&lt;/div&gt;&lt;div&gt;APIs must avoid duplicate charges&lt;/div&gt;&lt;div&gt;&lt;b&gt;Requirement: repeated requests must not create duplicate line items.&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;4. Long-running workflow&lt;/div&gt;&lt;div&gt;Bill periods can last days or months.&lt;/div&gt;&lt;div&gt;&lt;b&gt;Requirement:&amp;nbsp;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;The system must support workflows that persist across time.&lt;/span&gt;&lt;/b&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="40" y="40" width="760" height="2260" as="geometry" />
+        </mxCell>
+        <mxCell id="NdPG-nkEcryCC80ihYM3-1" value="Bill" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="865" y="130" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="NdPG-nkEcryCC80ihYM3-2" value="BillLineItem" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="1085" y="130" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="NdPG-nkEcryCC80ihYM3-4" value="" style="fontSize=12;html=1;endArrow=ERoneToMany;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="NdPG-nkEcryCC80ihYM3-1" target="NdPG-nkEcryCC80ihYM3-2" edge="1">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="1045" y="540" as="sourcePoint" />
+            <mxPoint x="1145" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="NdPG-nkEcryCC80ihYM3-5" value="consists of" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="NdPG-nkEcryCC80ihYM3-4" vertex="1" connectable="0">
+          <mxGeometry x="-0.02" y="-1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="NdPG-nkEcryCC80ihYM3-9" value="&lt;span&gt;Bill&lt;/span&gt;&lt;br&gt;&lt;span&gt; ├─ id&lt;/span&gt;&lt;br&gt;&lt;span&gt; ├─ currency&lt;/span&gt;&lt;br&gt;&lt;span&gt; ├─ status&lt;/span&gt;&lt;br&gt;&lt;span&gt; ├─ periodStart&lt;/span&gt;&lt;br&gt;&lt;span&gt; ├─ periodEnd&lt;/span&gt;&lt;br&gt;&lt;span&gt; ├─ createdAt&lt;/span&gt;&lt;br&gt;&lt;span&gt; ├─ closedAt&lt;/span&gt;&lt;br&gt;&lt;span&gt; └─ totalAmount&lt;/span&gt;" style="text;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="865" y="200" width="120" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="NdPG-nkEcryCC80ihYM3-10" value="&lt;span&gt;BillLineItem&lt;/span&gt;&lt;br&gt;&lt;span&gt; ├─ id&lt;/span&gt;&lt;br&gt;&lt;span&gt; ├─ billId&lt;/span&gt;&lt;br&gt;&lt;span&gt; ├─ description&lt;/span&gt;&lt;br&gt;&lt;span&gt; ├─ amount&lt;/span&gt;&lt;br&gt;&lt;span&gt; ├─ currency&lt;/span&gt;&lt;br&gt;&lt;span&gt; ├─ createdAt&lt;/span&gt;" style="text;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="1085" y="210" width="120" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="NdPG-nkEcryCC80ihYM3-11" value="&lt;h1 data-start=&quot;1511&quot; data-end=&quot;1550&quot;&gt;The Bill Lifecycle&lt;/h1&gt;&lt;p data-start=&quot;1552&quot; data-end=&quot;1609&quot;&gt;&lt;/p&gt;" style="text;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="850" y="340" width="710" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-15" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="nslGAu7CYD1ucYqMFyyi-1" target="nslGAu7CYD1ucYqMFyyi-3" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-1" value="Bill&lt;div&gt;(OPEN)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="995" y="430" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-65" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="nslGAu7CYD1ucYqMFyyi-3" target="nslGAu7CYD1ucYqMFyyi-60" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-3" value="Bill&lt;div&gt;(CLOSED)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="995" y="540" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-5" value="1. create" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="855" y="430" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-7" value="" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" target="nslGAu7CYD1ucYqMFyyi-1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="855" y="460" as="sourcePoint" />
+            <mxPoint x="1065" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-20" value="" style="group" parent="1" vertex="1" connectable="0">
+          <mxGeometry x="855" y="490" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-13" value="2. add line item" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="nslGAu7CYD1ucYqMFyyi-20" vertex="1">
+          <mxGeometry width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-14" value="" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="nslGAu7CYD1ucYqMFyyi-20" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint y="30" as="sourcePoint" />
+            <mxPoint x="140" y="30" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-23" value="&lt;h1 data-start=&quot;1511&quot; data-end=&quot;1550&quot;&gt;Simple Data Modelling&lt;/h1&gt;&lt;p data-start=&quot;1552&quot; data-end=&quot;1609&quot;&gt;&lt;/p&gt;" style="text;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="850" y="40" width="710" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-45" value="" style="group" parent="1" vertex="1" connectable="0">
+          <mxGeometry x="850" y="540" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-46" value="3. close bill at periodEnd" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="nslGAu7CYD1ucYqMFyyi-45" vertex="1">
+          <mxGeometry width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-47" value="" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="nslGAu7CYD1ucYqMFyyi-45" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint y="30" as="sourcePoint" />
+            <mxPoint x="140" y="30" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-48" value="immutable" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="1205" y="630" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-49" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="nslGAu7CYD1ucYqMFyyi-3" target="nslGAu7CYD1ucYqMFyyi-48" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1260" y="650" as="sourcePoint" />
+            <mxPoint x="1310" y="600" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-56" value="&lt;h1 data-start=&quot;1511&quot; data-end=&quot;1550&quot;&gt;API Semantics&lt;/h1&gt;&lt;p data-start=&quot;1552&quot; data-end=&quot;1609&quot;&gt;&lt;/p&gt;" style="text;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="855" y="1190" width="710" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-60" value="Bill&lt;div&gt;(COMPLETED)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="995" y="660" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-61" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="nslGAu7CYD1ucYqMFyyi-60" target="nslGAu7CYD1ucYqMFyyi-48" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1125" y="610" as="sourcePoint" />
+            <mxPoint x="1210" y="595" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-62" value="" style="group" parent="1" vertex="1" connectable="0">
+          <mxGeometry x="855" y="660" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-63" value="4. finalise bill by calculating total" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="nslGAu7CYD1ucYqMFyyi-62" vertex="1">
+          <mxGeometry width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-64" value="" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="nslGAu7CYD1ucYqMFyyi-62" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint y="30" as="sourcePoint" />
+            <mxPoint x="140" y="30" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-28" value="Bill&amp;nbsp;&lt;div&gt;Frontend&lt;/div&gt;&lt;div&gt;Backend&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="1095" y="890" width="120" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-30" value="1. create bill" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="955" y="890" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-31" value="" style="endArrow=classic;html=1;rounded=0;entryX=1;entryY=1;entryDx=0;entryDy=0;" parent="1" target="nslGAu7CYD1ucYqMFyyi-30" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="955" y="920" as="sourcePoint" />
+            <mxPoint x="1165" y="960" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-52" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="nslGAu7CYD1ucYqMFyyi-33" target="nslGAu7CYD1ucYqMFyyi-40" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-33" value="3. sleeps until period end" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="1417.82" y="950" width="157.5" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-34" value="Users" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" parent="1" vertex="1">
+          <mxGeometry x="895" y="930" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-51" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="nslGAu7CYD1ucYqMFyyi-35" target="nslGAu7CYD1ucYqMFyyi-33" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-35" value="Temporal" style="sketch=0;aspect=fixed;pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;align=center;fillColor=#000000;shape=mxgraph.azure.computer" parent="1" vertex="1">
+          <mxGeometry x="1470.82" y="840" width="50" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-36" value="" style="group" parent="1" vertex="1" connectable="0">
+          <mxGeometry x="955" y="970" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-37" value="4a. add line item" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="nslGAu7CYD1ucYqMFyyi-36" vertex="1">
+          <mxGeometry width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-38" value="" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="nslGAu7CYD1ucYqMFyyi-36" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint y="30" as="sourcePoint" />
+            <mxPoint x="140" y="30" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-50" value="&lt;h1 data-start=&quot;1511&quot; data-end=&quot;1550&quot;&gt;Architecture&lt;/h1&gt;&lt;p data-start=&quot;1552&quot; data-end=&quot;1609&quot;&gt;&lt;/p&gt;" style="text;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="850" y="750" width="710" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-43" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=none;startFill=1;startArrow=classic;" parent="1" source="nslGAu7CYD1ucYqMFyyi-35" target="nslGAu7CYD1ucYqMFyyi-28" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-44" value="2. Start BillPeriod workflow" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="1210" y="840" width="240" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-40" value="5a. wakes up at periodEnd" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="1380" y="1040" width="233.13" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-41" value="" style="endArrow=none;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;startArrow=blockThin;startFill=1;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1220" y="1070" as="sourcePoint" />
+            <mxPoint x="1598.75" y="1070" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-57" value="4b signal line item added to BillPeriod&lt;div&gt;4c insert activity to add line item into database&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="850" y="1110" width="260" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-58" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;jumpStyle=arc;jumpSize=16;" parent="1" source="nslGAu7CYD1ucYqMFyyi-57" target="nslGAu7CYD1ucYqMFyyi-37" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="960" y="1060" as="sourcePoint" />
+            <mxPoint x="1010" y="1010" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-66" value="5b close&amp;nbsp;bill by calculating the total&lt;div&gt;5c&amp;nbsp; completed bill once database updates finished&lt;/div&gt;&lt;div&gt;5d invoice is available&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="1360" y="1120" width="270" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-67" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="nslGAu7CYD1ucYqMFyyi-66" target="nslGAu7CYD1ucYqMFyyi-40" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="990" y="1120" as="sourcePoint" />
+            <mxPoint x="1030" y="1010" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-68" value="&lt;b&gt;1. Create Bill&lt;/b&gt;&lt;div&gt;&lt;b&gt;POST &lt;/b&gt;/bills&lt;/div&gt;&lt;div&gt;&lt;b&gt;Idempotency-Key&lt;/b&gt;: create-bill--1111&lt;/div&gt;&lt;div&gt;Request&lt;/div&gt;&lt;div&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;{&lt;br&gt;  &quot;currency&quot;: &lt;span class=&quot;ͼr&quot;&gt;&quot;USD&quot;&lt;/span&gt;,&lt;br&gt;  &quot;periodStart&quot;: &lt;span class=&quot;ͼr&quot;&gt;&quot;2026-03-01T00:00:00Z&quot;&lt;/span&gt;,&lt;br&gt;  &quot;periodEnd&quot;: &lt;span class=&quot;ͼr&quot;&gt;&quot;2026-03-31T23:59:59Z&quot;&lt;/span&gt;&lt;br&gt;}&lt;b&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;div&gt;&lt;div&gt;Response&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;div&gt;&lt;div class=&quot;pointer-events-none absolute inset-x-4 top-12 bottom-4&quot;&gt;&lt;div class=&quot;pointer-events-none sticky z-40 shrink-0 z-1!&quot;&gt;&lt;div class=&quot;sticky bg-token-border-light&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;&quot;&gt;&lt;div class=&quot;relative z-0 flex max-w-full&quot;&gt;&lt;div class=&quot;q9tKkq_viewer cm-editor z-10 light:cm-light dark:cm-light flex h-full w-full flex-col items-stretch ͼk ͼy&quot; dir=&quot;ltr&quot; id=&quot;code-block-viewer&quot;&gt;&lt;div class=&quot;cm-scroller&quot;&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;{&lt;br&gt;  &quot;billId&quot;: &lt;span class=&quot;ͼr&quot;&gt;&quot;bill_987&quot;&lt;/span&gt;,&lt;br&gt;  &quot;status&quot;: &lt;span class=&quot;ͼr&quot;&gt;&quot;OPEN&quot;&lt;/span&gt;,&lt;br&gt;  &quot;periodStart&quot;: &lt;span class=&quot;ͼr&quot;&gt;&quot;2026-03-01T00:00:00Z&quot;&lt;/span&gt;,&lt;br&gt;  &quot;periodEnd&quot;: &lt;span class=&quot;ͼr&quot;&gt;&quot;2026-03-31T23:59:59Z&quot;&lt;/span&gt;&lt;br&gt;}&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;b&gt;2. Add line item&lt;/b&gt;&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;b&gt;POST &lt;/b&gt;/bills/{billId}/line-items&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;b&gt;Idempotency-Key&lt;/b&gt;: add-line-item-1111&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;Request&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;{&lt;br&gt;  &quot;description&quot;: &lt;span class=&quot;ͼr&quot;&gt;&quot;Trading Fee&quot;&lt;/span&gt;,&lt;br&gt;  &quot;amount&quot;: &lt;span class=&quot;ͼr&quot;&gt;&quot;25.50&quot;&lt;/span&gt;,&lt;br&gt;  &quot;currency&quot;: &lt;span class=&quot;ͼr&quot;&gt;&quot;USD&quot;&lt;/span&gt;&lt;br&gt;}&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Response&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;200 line item added to bill&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;400 line item rejected&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;b&gt;3. Close Bill&lt;/b&gt;&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;b&gt;POST&amp;nbsp;&lt;/b&gt;&lt;span style=&quot;background-color: transparent;&quot;&gt;/bills/{billId}/close&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;b&gt;Idempotency-Key&lt;/b&gt;: close-bill-1111&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;span style=&quot;background-color: transparent;&quot;&gt;Response&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;div class=&quot;pointer-events-none absolute inset-x-4 top-12 bottom-4&quot;&gt;&lt;div class=&quot;pointer-events-none sticky z-40 shrink-0 z-1!&quot;&gt;&lt;div class=&quot;sticky bg-token-border-light&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;&quot;&gt;&lt;div class=&quot;relative z-0 flex max-w-full&quot;&gt;&lt;div class=&quot;q9tKkq_viewer cm-editor z-10 light:cm-light dark:cm-light flex h-full w-full flex-col items-stretch ͼk ͼy&quot; dir=&quot;ltr&quot; id=&quot;code-block-viewer&quot;&gt;&lt;div class=&quot;cm-scroller&quot;&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;{&lt;br&gt;  &quot;billId&quot;: &lt;span class=&quot;ͼr&quot;&gt;&quot;bill_001&quot;&lt;/span&gt;,&lt;br&gt;  &quot;status&quot;: &lt;span class=&quot;ͼr&quot;&gt;&quot;CLOSED&quot;&lt;/span&gt;,&lt;br&gt;  &quot;totalAmount&quot;: &lt;span class=&quot;ͼr&quot;&gt;&quot;220.50&quot;&lt;/span&gt;&lt;br&gt;}&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;b&gt;4. Get Bill&lt;/b&gt;&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;b&gt;GET &lt;/b&gt;/bills/{billId}&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;Response&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&amp;nbsp; {&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &quot;billId&quot;: &quot;bill_101&quot;,&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &quot;status&quot;: &quot;OPEN&quot;,&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &quot;currency&quot;: &quot;USD&quot;,&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &quot;periodEnd&quot;: &quot;2026-03-31&quot;&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&amp;nbsp; &amp;nbsp; }&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;b&gt;GET&lt;/b&gt; /bills?status=OPEN&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;b&gt;GET&lt;/b&gt; /bills?status=CLOSED&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;b&gt;GET&lt;/b&gt; /bills?status=ALL&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;Response&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;{&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&amp;nbsp; &quot;bills&quot;: [&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&amp;nbsp; &amp;nbsp; {&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &quot;billId&quot;: &quot;bill_101&quot;,&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &quot;status&quot;: &quot;OPEN&quot;,&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &quot;currency&quot;: &quot;USD&quot;,&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &quot;periodEnd&quot;: &quot;2026-03-31&quot;&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&amp;nbsp; &amp;nbsp; }&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&amp;nbsp; ]&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;}&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="860" y="1260" width="380" height="1070" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-69" value="&lt;b&gt;5. Get Bill&#39;s line items&lt;/b&gt;&lt;div&gt;&lt;b&gt;GET&amp;nbsp;&lt;/b&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;/bills/{billId}/line-items&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;Response&lt;/div&gt;&lt;div&gt;&lt;div&gt;{&lt;/div&gt;&lt;div&gt;&amp;nbsp; &quot;items&quot;: [&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp; {&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &quot;description&quot;: &quot;Trading Fee&quot;,&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &quot;amount&quot;: &quot;12.50&quot;&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp; },&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp; {&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &quot;description&quot;: &quot;Custody Fee&quot;,&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &quot;amount&quot;: &quot;5.00&quot;&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp; }&lt;/div&gt;&lt;div&gt;&amp;nbsp; ]&lt;/div&gt;&lt;/div&gt;&lt;pre data-end=&quot;2546&quot; data-start=&quot;2508&quot; class=&quot;overflow-visible! px-0!&quot;&gt;&lt;div class=&quot;relative w-full my-4&quot;&gt;&lt;div class=&quot;&quot;&gt;&lt;div class=&quot;relative&quot;&gt;&lt;div class=&quot;&quot;&gt;&lt;div class=&quot;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/pre&gt;6. Get Invoice&lt;div&gt;&lt;b&gt;GET&amp;nbsp;&lt;/b&gt;&lt;span style=&quot;background-color: transparent;&quot;&gt;&amp;nbsp;/bills/{billId}/invoice&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;Response&lt;/div&gt;&lt;div&gt;&lt;div class=&quot;pointer-events-none absolute inset-x-4 top-12 bottom-4&quot;&gt;&lt;div class=&quot;pointer-events-none sticky z-40 shrink-0 z-1!&quot;&gt;&lt;div class=&quot;sticky bg-token-border-light&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;&quot;&gt;&lt;div class=&quot;relative z-0 flex max-w-full&quot;&gt;&lt;div class=&quot;q9tKkq_viewer cm-editor z-10 light:cm-light dark:cm-light flex h-full w-full flex-col items-stretch ͼk ͼy&quot; dir=&quot;ltr&quot; id=&quot;code-block-viewer&quot;&gt;&lt;div class=&quot;cm-scroller&quot;&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;{&lt;br&gt;  &quot;billId&quot;: &lt;span class=&quot;ͼr&quot;&gt;&quot;bill_001&quot;&lt;/span&gt;,&lt;/div&gt;&lt;div class=&quot;cm-content q9tKkq_readonly&quot;&gt;&quot;status&quot;: &quot;COMPLETED&quot;&lt;br&gt;  &quot;totalAmount&quot;: &lt;span class=&quot;ͼr&quot;&gt;&quot;220.50&quot;&lt;/span&gt;,&lt;br&gt;  &quot;lineItems&quot;: [...]&lt;br&gt;}&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="1260" y="1250" width="380" height="1070" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-70" value="6. Get final invoice" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="955" y="1030" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nslGAu7CYD1ucYqMFyyi-71" value="" style="endArrow=classic;html=1;rounded=0;entryX=1;entryY=1;entryDx=0;entryDy=0;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="955" y="1054.5" as="sourcePoint" />
+            <mxPoint x="1095" y="1054.5" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
