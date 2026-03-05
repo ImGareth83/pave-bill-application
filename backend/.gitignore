@@ -1,0 +1,9 @@
+.$diagrams.drawio.bkp
+.encore
+encore.gen.go
+encore.gen.cue
+/.encore
+/encore.gen
+/node_modules
+/tsconfig.tsbuildinfo
+/.vscode
