@@ -45,6 +45,17 @@ jobs:
       - name: Add Encore to PATH
         run: echo "$HOME/.encore/bin" >> "$GITHUB_PATH"
 
+      - name: Authenticate Encore CLI
+        env:
+          ENCORE_AUTH_KEY: ${{ secrets.ENCORE_AUTH_KEY }}
+        run: |
+          if [ -z "$ENCORE_AUTH_KEY" ]; then
+            echo "Missing ENCORE_AUTH_KEY GitHub secret."
+            echo "Create one in: Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+          encore auth login --auth-key="$ENCORE_AUTH_KEY"
+
       - name: Tool versions
         run: |
           node --version

@@ -6,12 +6,31 @@ import {
   createBill,
   getBill,
   getBillLineItems,
+  health,
   getInvoice,
+  liveness,
   queryBills,
   rejectLineItem
 } from "./backend";
 
 describe("billing", () => {
+  test("liveness endpoint returns ok", async () => {
+    await expect(liveness()).resolves.toEqual({
+      ok: true,
+      service: "backend"
+    });
+  });
+
+  test("health endpoint reports database ok", async () => {
+    await expect(health()).resolves.toEqual({
+      ok: true,
+      service: "backend",
+      checks: {
+        database: "ok"
+      }
+    });
+  });
+
   test("idempotency replay for createBill returns original response", async () => {
     const previousEnv = process.env.TEST_IDEMPOTENCY_KEY;
     process.env.TEST_IDEMPOTENCY_KEY = "idem-create-replay";
