@@ -30,7 +30,13 @@ Developer dashboard:
 API base URL:
 - http://127.0.0.1:4000
 
+Health endpoints:
+- `GET /livez`
+- `GET /healthz`
+
 ## API Endpoints
+- `GET /livez`
+- `GET /healthz`
 - `POST /bills`
 - `POST /bills/:billId/line-items`
 - `POST /bills/:billId/line-items/:lineItemId/reject`
@@ -45,6 +51,16 @@ Notes:
 - `status` is required on `GET /bills`.
 - Invoice retrieval is allowed only when the bill status is `COMPLETED`.
 - Rejected line items are excluded from invoice totals.
+
+### Example: Liveness
+```bash
+curl 'http://127.0.0.1:4000/livez'
+```
+
+### Example: Health
+```bash
+curl 'http://127.0.0.1:4000/healthz'
+```
 
 ## Lifecycle
 1. Create bill (`OPEN`)

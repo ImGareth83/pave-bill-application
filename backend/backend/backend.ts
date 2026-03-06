@@ -133,6 +133,19 @@ interface InvoiceResponse {
   }>;
 }
 
+interface LivenessResponse {
+  ok: true;
+  service: "backend";
+}
+
+interface HealthResponse {
+  ok: true;
+  service: "backend";
+  checks: {
+    database: "ok";
+  };
+}
+
 interface BillRow {
   id: string;
   currency: Currency;
@@ -460,6 +473,32 @@ export const getInvoice = api(
       currency: bill.currency,
       totalAmount: formatMinor(bill.total_minor),
       lineItems
+    };
+  }
+);
+
+export const liveness = api(
+  { expose: true, auth: false, method: "GET", path: "/livez" },
+  async (): Promise<LivenessResponse> => ({
+    ok: true,
+    service: "backend"
+  })
+);
+
+export const health = api(
+  { expose: true, auth: false, method: "GET", path: "/healthz" },
+  async (): Promise<HealthResponse> => {
+    const dbCheck = await db.queryRow<{ ok: number }>`SELECT 1 AS ok`;
+    if (!dbCheck || Number(dbCheck.ok) !== 1) {
+      throw APIError.unavailable("database health check failed");
+    }
+
+    return {
+      ok: true,
+      service: "backend",
+      checks: {
+        database: "ok"
+      }
     };
   }
 );
