@@ -43,7 +43,7 @@ interface PingResponse {
 export const ping = api(
   { method: "POST" },
   async (p: PingParams): Promise<PingResponse> => {
-    return { message: Hello ${p.name}! };
+    return { message: `Hello ${p.name}!` };
   }
 );
 
