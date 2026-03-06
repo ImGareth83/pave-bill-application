@@ -32,11 +32,11 @@ API base URL:
 
 Health endpoints:
 - `GET /livez`
-- `GET /healthz`
+- `GET /readyz`
 
 ## API Endpoints
 - `GET /livez`
-- `GET /healthz`
+- `GET /readyz`
 - `POST /bills`
 - `POST /bills/:billId/line-items`
 - `POST /bills/:billId/line-items/:lineItemId/reject`
@@ -59,7 +59,7 @@ curl 'http://127.0.0.1:4000/livez'
 
 ### Example: Health
 ```bash
-curl 'http://127.0.0.1:4000/healthz'
+curl 'http://127.0.0.1:4000/readyz'
 ```
 
 ## Lifecycle

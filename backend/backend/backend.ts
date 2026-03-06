@@ -486,7 +486,7 @@ export const liveness = api(
 );
 
 export const health = api(
-  { expose: true, auth: false, method: "GET", path: "/healthz" },
+  { expose: true, auth: false, method: "GET", path: "/readyz" },
   async (): Promise<HealthResponse> => {
     const dbCheck = await db.queryRow<{ ok: number }>`SELECT 1 AS ok`;
     if (!dbCheck || Number(dbCheck.ok) !== 1) {
