@@ -4,5 +4,7 @@
 backend/.encore
 backend/encore.gen
 backend/node_modules
+workflow/node_modules
+node_modules
 backend/encore.gen.go
 backend/encore.gen.cue
