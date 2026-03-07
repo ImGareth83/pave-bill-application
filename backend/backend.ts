@@ -872,9 +872,21 @@ function temporalTaskQueue(): string {
   return process.env.TEMPORAL_TASK_QUEUE?.trim() || "billing-periods";
 }
 
+function temporalAddress(): string {
+  return process.env.TEMPORAL_ADDRESS?.trim() || "localhost:7233";
+}
+
+function temporalApiKey(): string | undefined {
+  const value = process.env.TEMPORAL_API_KEY?.trim();
+  return value ? value : undefined;
+}
+
 async function getTemporalConnection(): Promise<TemporalConnection> {
+  const apiKey = temporalApiKey();
   temporalConnectionPromise ??= TemporalConnection.connect({
-    address: process.env.TEMPORAL_ADDRESS?.trim() || "localhost:7233"
+    address: temporalAddress(),
+    apiKey,
+    tls: apiKey ? true : undefined
   });
   return temporalConnectionPromise;
 }

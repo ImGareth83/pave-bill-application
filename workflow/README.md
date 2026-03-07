@@ -17,6 +17,7 @@ This package contains the Temporal worker for bill-period orchestration.
 
 ## Environment
 - `TEMPORAL_ADDRESS`: Temporal server address, defaults to `localhost:7233`
+- `TEMPORAL_API_KEY`: optional Temporal Cloud API key; when set, the worker connects with TLS enabled
 - `TEMPORAL_NAMESPACE`: Temporal namespace, defaults to `default`
 - `TEMPORAL_TASK_QUEUE`: Task queue name, defaults to `billing-periods`
 
