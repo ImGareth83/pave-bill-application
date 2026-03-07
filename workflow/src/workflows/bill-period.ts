@@ -96,11 +96,11 @@ export async function billPeriodWorkflow(
       invalid("BillMismatch", "request billId does not match workflow billId");
     }
 
-    if (phase !== "OPEN") {
-      invalid("BillNotOpen", "only OPEN bills can be closed");
-    }
+    return runCloseRequest(processedCloses, request.requestId, async () => {
+      if (phase !== "OPEN") {
+        invalid("BillNotOpen", "only OPEN bills can be closed");
+      }
 
-    return runRequest(processedCloses, request.requestId, async () => {
       manualCloseRequested = true;
       const result = await ensureLifecycle();
       return result.close;
@@ -148,6 +148,24 @@ function createRequestState<T>(): RequestState<T> {
     completed: new Map<string, ProcessedUpdate<T>>(),
     inFlight: new Map<string, Promise<T>>()
   };
+}
+
+async function runCloseRequest<T>(
+  state: RequestState<T>,
+  requestId: string,
+  fn: () => Promise<T>
+): Promise<T> {
+  const completed = state.completed.get(requestId);
+  if (completed) {
+    return completed.response;
+  }
+
+  const existingPromise = state.inFlight.get(requestId);
+  if (existingPromise) {
+    return existingPromise;
+  }
+
+  return runRequest(state, requestId, fn);
 }
 
 async function runRequest<T>(

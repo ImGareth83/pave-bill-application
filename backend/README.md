@@ -1,19 +1,18 @@
 # Billing Backend (Encore)
 
-This project is an Encore TypeScript backend for bill management.
+This service is the public Encore API for bill management.
 
 ## Features
 - Create bills
-- Add line items to open bills
-- Reject line items while bill is open
-- Close bills (`OPEN -> CLOSED`)
-- Complete bills (`CLOSED -> COMPLETED`)
-- Compute and persist total bill amount during bill completion
+- Start one Temporal workflow per bill period
+- Add line items to open bills through Temporal updates
+- Reject line items while bill is open through Temporal updates
+- Close bills early through Temporal updates
+- Read bill, line-item, and invoice state from Postgres
 - List bills by status (`OPEN`, `CLOSED`, `COMPLETED`)
-- Fetch bill line items
-- Fetch bill invoice view (completed bills only)
 - Currency support: `USD`, `GEL`
 - Idempotency support on POST endpoints via `Idempotency-Key`
+- Recover `createBill` when the bill row exists but workflow start has not completed yet
 
 ## Prerequisites
 - Encore CLI installed
@@ -51,6 +50,7 @@ Notes:
 - `status` is required on `GET /bills`.
 - Invoice retrieval is allowed only when the bill status is `COMPLETED`.
 - Rejected line items are excluded from invoice totals.
+- `POST /bills/:billId/complete` no longer performs completion. It only returns completion data if the workflow has already completed the bill; otherwise it returns `BillCompletionManagedByWorkflow`.
 
 ### Example: Liveness
 ```bash
@@ -64,9 +64,11 @@ curl 'http://127.0.0.1:4000/readyz'
 
 ## Lifecycle
 1. Create bill (`OPEN`)
-2. Add / reject line items (allowed only when `OPEN`)
-3. Close bill (`CLOSED`)
-4. Complete bill (`COMPLETED`) - total is calculated here from `ADDED` line items
+2. Backend starts workflow `bill/<billId>`
+3. Add / reject line items while the bill is `OPEN`
+4. Close bill early through `POST /bills/:billId/close`, or let the workflow close it automatically at `periodEnd`
+5. Workflow persists `OPEN -> CLOSED -> COMPLETED`
+6. Invoice is available only after completion and excludes rejected items
 
 ### Example: Create bill
 ```bash
@@ -114,13 +116,32 @@ curl -X POST 'http://127.0.0.1:4000/bills/<billId>/complete' \
   -H 'Idempotency-Key: complete-bill-1111'
 ```
 
+Expected behavior:
+- if the workflow has already completed the bill, this returns the completion payload
+- otherwise it returns `BillCompletionManagedByWorkflow`
+
 ## Testing
-Run integration tests via Encore:
+Run backend unit tests:
+```bash
+npm run test:backend
+```
+
+Run workflow tests from the repo root:
+```bash
+npm run test:workflow
+```
+
+Run Encore-managed tests, including DB-backed workflow activity tests:
 ```bash
 encore test
 ```
 
 ## Database access
 ```bash
-encore db shell <database-name> --env=local --superuser
+encore db shell backend
 ```
+
+## Migrations
+- `1_create_tables.up.sql`: base schema
+- `2_add_idempotency_pending_state.up.sql`: backend-owned `PENDING` / `COMPLETED` idempotency state
+- `3_add_bill_workflow_state.up.sql`: tracks whether a persisted bill has had its workflow started

@@ -6,8 +6,8 @@
   "license": "MPL-2.0",
   "type": "module",
   "scripts": {
-    "test": "vitest run workflow/src/domain.test.ts",
-    "test:workflow": "vitest run workflow/src/domain.test.ts",
+    "test": "vitest run workflow/src/domain.test.ts workflow/src/workflows/bill-period.test.ts workflow/src/activities/bill-activities.db.test.ts",
+    "test:workflow": "vitest run workflow/src/domain.test.ts workflow/src/workflows/bill-period.test.ts workflow/src/activities/bill-activities.db.test.ts",
     "test:backend": "NODE_ENV=test vitest run backend/backend.test.ts",
     "typecheck": "tsc --noEmit",
     "worker": "tsx workflow/src/worker.ts"
@@ -19,12 +19,10 @@
     "@temporalio/worker": "^1.11.5",
     "@temporalio/workflow": "^1.11.5",
     "encore.dev": "^1.54.2",
-    "pg": "^8.13.1",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.5.7",
-    "@types/pg": "^8.11.10",
     "tsx": "^4.19.2",
     "typescript": "^5.2.2",
     "vite": "^5.4.10",

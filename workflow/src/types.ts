@@ -68,6 +68,7 @@ export interface BillRow {
   id: string;
   currency: Currency;
   status: BillStatus;
+  workflow_state: "NOT_STARTED" | "STARTED";
   period_start: Date | string;
   period_end: Date | string;
   created_at: Date | string;
@@ -95,5 +96,6 @@ export interface PersistedLifecycleResult {
 
 export interface IdempotencyRow {
   request_hash: string;
-  response_json: unknown;
+  response_json: unknown | null;
+  state?: "PENDING" | "COMPLETED";
 }

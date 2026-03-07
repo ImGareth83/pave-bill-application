@@ -1,7 +1,6 @@
-import type { PoolClient } from "pg";
 import { v7 as uuidv7 } from "uuid";
 
-import { withTransaction, queryOne } from "../db";
+import { withTransaction, queryOne, type Tx } from "../db";
 import {
   asDate,
   formatMinor,
@@ -75,7 +74,7 @@ export async function addLineItem(input: AddLineItemInput): Promise<AddLineItemR
         VALUES ($1, $2, $3, $4, $5, 'ADDED')
         RETURNING created_at
       `,
-      [lineItemId, input.billId, description, amountMinor.toString(), input.currency]
+      [lineItemId, input.billId, description, amountMinor, input.currency]
     );
 
     if (!inserted) {
@@ -173,13 +172,13 @@ export async function closeAndCompleteBill(billId: string): Promise<PersistedLif
 }
 
 async function fetchBillForUpdate(
-  client: PoolClient,
+  client: Tx,
   billId: string
 ): Promise<BillRow> {
   const bill = await queryOne<BillRow>(
     client,
     `
-      SELECT id, currency, status, period_start, period_end, created_at, closed_at, completed_at, total_minor
+      SELECT id, currency, status, workflow_state, period_start, period_end, created_at, closed_at, completed_at, total_minor
       FROM bills
       WHERE id = $1
       FOR UPDATE
@@ -195,7 +194,7 @@ async function fetchBillForUpdate(
 }
 
 async function fetchLineItemForUpdate(
-  client: PoolClient,
+  client: Tx,
   billId: string,
   lineItemId: string
 ): Promise<LineItemRow> {
@@ -217,7 +216,7 @@ async function fetchLineItemForUpdate(
   return lineItem;
 }
 
-async function persistCloseBill(client: PoolClient, billId: string): Promise<CloseBillResponse> {
+async function persistCloseBill(client: Tx, billId: string): Promise<CloseBillResponse> {
   const bill = await fetchBillForUpdate(client, billId);
 
   if (bill.status === "OPEN") {
@@ -255,7 +254,7 @@ async function persistCloseBill(client: PoolClient, billId: string): Promise<Clo
 }
 
 async function persistCompleteBill(
-  client: PoolClient,
+  client: Tx,
   billId: string
 ): Promise<CompleteBillResponse> {
   const bill = await fetchBillForUpdate(client, billId);
@@ -282,7 +281,7 @@ async function persistCompleteBill(
     `,
     [billId]
   );
-  const totalMinor = totalRow ? totalRow.total_minor : 0;
+  const totalMinor = BigInt(totalRow ? totalRow.total_minor : 0);
 
   const updated = await queryOne<{ completed_at: Date | string }>(
     client,
@@ -292,7 +291,7 @@ async function persistCompleteBill(
       WHERE id = $1
       RETURNING completed_at
     `,
-    [billId, totalMinor.toString()]
+      [billId, totalMinor]
   );
 
   if (!updated) {
@@ -308,7 +307,7 @@ async function persistCompleteBill(
 }
 
 async function findIdempotentResponse<T>(
-  client: PoolClient,
+  client: Tx,
   scope: string,
   requestId: string,
   requestHash: string
@@ -335,19 +334,22 @@ async function findIdempotentResponse<T>(
 }
 
 async function storeIdempotentResponse<T extends object>(
-  client: PoolClient,
+  client: Tx,
   scope: string,
   requestId: string,
   requestHash: string,
   response: T
 ): Promise<T> {
   try {
-    await client.query(
+    await client.rawExec(
       `
         INSERT INTO idempotency_records (scope, idem_key, request_hash, response_json, http_code)
-        VALUES ($1, $2, $3, $4::jsonb, 200)
+        VALUES ($1, $2, $3, $4, 200)
       `,
-      [scope, requestId, requestHash, JSON.stringify(response)]
+      scope,
+      requestId,
+      requestHash,
+      response as object
     );
     return response;
   } catch (error) {

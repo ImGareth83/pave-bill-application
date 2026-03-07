@@ -1,41 +1,32 @@
-import { Pool, type PoolClient, type QueryResultRow } from "pg";
+import { db, type Tx } from "../../lib/database";
 
-let pool: Pool | undefined;
+export { db, type Tx };
+type SQLParam =
+  | string
+  | number
+  | boolean
+  | bigint
+  | Date
+  | Record<string, unknown>
+  | null
+  | undefined;
 
-export function getPool(): Pool {
-  if (pool) {
-    return pool;
-  }
-
-  const connectionString = process.env.DATABASE_URL?.trim();
-  if (!connectionString) {
-    throw new Error("DATABASE_URL is required");
-  }
-
-  pool = new Pool({ connectionString });
-  return pool;
-}
-
-export async function withTransaction<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
-  const client = await getPool().connect();
+export async function withTransaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {
+  const tx = await db.begin();
   try {
-    await client.query("BEGIN");
-    const result = await fn(client);
-    await client.query("COMMIT");
+    const result = await fn(tx);
+    await tx.commit();
     return result;
   } catch (error) {
-    await client.query("ROLLBACK");
+    await tx.rollback();
     throw error;
-  } finally {
-    client.release();
   }
 }
 
-export async function queryOne<T extends QueryResultRow>(
-  client: PoolClient,
+export async function queryOne<T extends object>(
+  tx: Tx,
   sql: string,
-  values: unknown[]
+  values: SQLParam[]
 ): Promise<T | null> {
-  const result = await client.query<T>(sql, values);
-  return result.rows[0] ?? null;
+  return tx.rawQueryRow<T>(sql, ...values);
 }
