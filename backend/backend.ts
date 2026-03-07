@@ -1163,6 +1163,12 @@ function temporalApiKey(): string | undefined {
 
 async function getTemporalConnection(): Promise<TemporalConnection> {
   const apiKey = temporalApiKey();
+  console.info("initializing temporal connection", {
+    address: temporalAddress(),
+    namespace: process.env.TEMPORAL_NAMESPACE?.trim() || "default",
+    taskQueue: temporalTaskQueue(),
+    hasApiKey: Boolean(apiKey)
+  });
   temporalConnectionPromise ??= TemporalConnection.connect({
     address: temporalAddress(),
     apiKey,
@@ -1172,6 +1178,12 @@ async function getTemporalConnection(): Promise<TemporalConnection> {
 }
 
 async function getTemporalClient(): Promise<TemporalClient> {
+  console.info("initializing temporal client", {
+    address: temporalAddress(),
+    namespace: process.env.TEMPORAL_NAMESPACE?.trim() || "default",
+    taskQueue: temporalTaskQueue(),
+    hasApiKey: Boolean(temporalApiKey())
+  });
   temporalClientPromise ??= getTemporalConnection().then(
     (connection) =>
       new TemporalClient({
@@ -1189,16 +1201,38 @@ async function startBillWorkflow(input: {
   periodEnd: string;
 }): Promise<void> {
   try {
+    console.info("starting bill workflow", {
+      workflowId: workflowIdForBill(input.billId),
+      billId: input.billId,
+      address: temporalAddress(),
+      namespace: process.env.TEMPORAL_NAMESPACE?.trim() || "default",
+      taskQueue: temporalTaskQueue()
+    });
     const client = await getTemporalClient();
     await client.workflow.start("billPeriodWorkflow", {
       taskQueue: temporalTaskQueue(),
       workflowId: workflowIdForBill(input.billId),
       args: [input]
     });
+    console.info("started bill workflow", {
+      workflowId: workflowIdForBill(input.billId),
+      billId: input.billId
+    });
   } catch (error) {
     if (error instanceof WorkflowExecutionAlreadyStartedError) {
+      console.info("bill workflow already started", {
+        workflowId: workflowIdForBill(input.billId),
+        billId: input.billId
+      });
       return;
     }
+    logTemporalFailure("failed to start bill workflow", error, {
+      workflowId: workflowIdForBill(input.billId),
+      billId: input.billId,
+      address: temporalAddress(),
+      namespace: process.env.TEMPORAL_NAMESPACE?.trim() || "default",
+      taskQueue: temporalTaskQueue()
+    });
     throw mapTemporalError(error);
   }
 }
@@ -1209,10 +1243,26 @@ async function executeBillWorkflowUpdate<T>(
   args: [unknown, ...unknown[]]
 ): Promise<T> {
   try {
+    console.info("executing bill workflow update", {
+      workflowId: workflowIdForBill(billId),
+      billId,
+      updateName,
+      address: temporalAddress(),
+      namespace: process.env.TEMPORAL_NAMESPACE?.trim() || "default",
+      taskQueue: temporalTaskQueue()
+    });
     const client = await getTemporalClient();
     const handle = client.workflow.getHandle(workflowIdForBill(billId));
     return await handle.executeUpdate<T, [unknown, ...unknown[]]>(updateName, { args });
   } catch (error) {
+    logTemporalFailure("failed to execute bill workflow update", error, {
+      workflowId: workflowIdForBill(billId),
+      billId,
+      updateName,
+      address: temporalAddress(),
+      namespace: process.env.TEMPORAL_NAMESPACE?.trim() || "default",
+      taskQueue: temporalTaskQueue()
+    });
     throw mapTemporalError(error);
   }
 }
@@ -1244,4 +1294,16 @@ function mapTemporalError(error: unknown): APIError {
   }
 
   return APIError.unavailable("workflow service unavailable");
+}
+
+function logTemporalFailure(
+  message: string,
+  error: unknown,
+  details: Record<string, unknown>
+): void {
+  console.error(message, {
+    ...details,
+    errorName: error instanceof Error ? error.name : typeof error,
+    errorMessage: error instanceof Error ? error.message : String(error)
+  });
 }
