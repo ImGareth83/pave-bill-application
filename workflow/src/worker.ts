@@ -10,13 +10,28 @@ const namespace = process.env.TEMPORAL_NAMESPACE?.trim() || "default";
 let workerStartPromise: Promise<void> | undefined;
 
 export async function runWorker(): Promise<void> {
+  console.info("starting temporal worker", {
+    address,
+    namespace,
+    taskQueue
+  });
   const connection = await NativeConnection.connect({
     address,
     apiKey,
     tls: apiKey ? true : undefined
   });
+  console.info("connected to temporal", {
+    address,
+    namespace,
+    taskQueue
+  });
   const workflowsPath = fileURLToPath(new URL("./workflows/bill-period.ts", import.meta.url));
 
+  console.info("creating temporal worker", {
+    workflowsPath,
+    namespace,
+    taskQueue
+  });
   const worker = await Worker.create({
     connection,
     namespace,
@@ -25,6 +40,14 @@ export async function runWorker(): Promise<void> {
     activities: billActivities
   });
 
+  console.info("temporal worker created", {
+    namespace,
+    taskQueue
+  });
+  console.info("temporal worker entering run loop", {
+    namespace,
+    taskQueue
+  });
   await worker.run();
 }
 
