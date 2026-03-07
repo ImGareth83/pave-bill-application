@@ -41,13 +41,7 @@ export const rejectLineItemUpdate = defineUpdate<RejectLineItemResponse, [Reject
 );
 export const closeBillUpdate = defineUpdate<CloseBillResponse, [CloseBillInput]>("closeBill");
 
-interface ProcessedUpdate<T> {
-  requestId: string;
-  response: T;
-}
-
 interface RequestState<T> {
-  completed: Map<string, ProcessedUpdate<T>>;
   inFlight: Map<string, Promise<T>>;
 }
 
@@ -145,7 +139,6 @@ function ensureOpen(phase: WorkflowPhase): void {
 
 function createRequestState<T>(): RequestState<T> {
   return {
-    completed: new Map<string, ProcessedUpdate<T>>(),
     inFlight: new Map<string, Promise<T>>()
   };
 }
@@ -155,11 +148,6 @@ async function runCloseRequest<T>(
   requestId: string,
   fn: () => Promise<T>
 ): Promise<T> {
-  const completed = state.completed.get(requestId);
-  if (completed) {
-    return completed.response;
-  }
-
   const existingPromise = state.inFlight.get(requestId);
   if (existingPromise) {
     return existingPromise;
@@ -173,11 +161,6 @@ async function runRequest<T>(
   requestId: string,
   fn: () => Promise<T>
 ): Promise<T> {
-  const completed = state.completed.get(requestId);
-  if (completed) {
-    return completed.response;
-  }
-
   const existingPromise = state.inFlight.get(requestId);
   if (existingPromise) {
     return existingPromise;
@@ -185,9 +168,7 @@ async function runRequest<T>(
 
   const promise = (async () => {
     try {
-      const response = await fn();
-      state.completed.set(requestId, { requestId, response });
-      return response;
+      return await fn();
     } finally {
       state.inFlight.delete(requestId);
     }

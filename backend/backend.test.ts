@@ -28,6 +28,10 @@ const mockState = vi.hoisted(() => {
     static unavailable(message: string) {
       return new MockAPIError(message);
     }
+
+    static unauthenticated(message: string) {
+      return new MockAPIError(message);
+    }
   }
 
   type BillRecord = {
@@ -74,7 +78,7 @@ const mockState = vi.hoisted(() => {
     }))
   };
 
-  const currentRequest = vi.fn(() => undefined);
+  const currentRequest = vi.fn<() => unknown>(() => undefined);
 
   function reset() {
     bills.clear();
@@ -172,6 +176,7 @@ const mockState = vi.hoisted(() => {
     async begin() {
       return {
         queryRow: createTaggedQueryRow(),
+        query: createTaggedQuery(),
         exec: createTaggedExec(),
         commit: vi.fn(async () => undefined),
         rollback: vi.fn(async () => undefined)
@@ -333,6 +338,24 @@ async function loadBackend() {
   return import("./backend");
 }
 
+function buildCloseResponse(closedAt: string) {
+  return {
+    billId: "bill_001",
+    status: "CLOSED" as const,
+    closedAt,
+    totalAmount: "12.50",
+    lineItems: [
+      {
+        id: "li_001",
+        description: "Trading Fee",
+        amount: "12.50",
+        currency: "USD" as const,
+        createdAt: mockState.now
+      }
+    ]
+  };
+}
+
 describe("backend temporal integration", () => {
   test("createBill starts one workflow and replays idempotently", async () => {
     process.env.TEST_IDEMPOTENCY_KEY = "idem-create";
@@ -491,19 +514,11 @@ describe("backend temporal integration", () => {
     process.env.TEST_IDEMPOTENCY_KEY = "idem-close";
     const { closeBill } = await loadBackend();
 
-    mockState.temporal.executeUpdate.mockResolvedValueOnce({
-      billId: "bill_001",
-      status: "CLOSED",
-      closedAt: mockState.now
-    });
+    mockState.temporal.executeUpdate.mockResolvedValueOnce(buildCloseResponse(mockState.now));
 
     const result = await closeBill({ billId: "bill_001" });
 
-    expect(result).toEqual({
-      billId: "bill_001",
-      status: "CLOSED",
-      closedAt: mockState.now
-    });
+    expect(result).toEqual(buildCloseResponse(mockState.now));
     expect(mockState.temporal.executeUpdate).toHaveBeenCalledWith("closeBill", {
       args: [{ requestId: "idem-close", billId: "bill_001" }]
     });

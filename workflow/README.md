@@ -10,15 +10,14 @@ orchestration.
   - reject line item
   - close bill early
 - Auto-close and finalize the bill when `periodEnd` is reached
-- Persist bill mutations directly to Postgres through activities
+- Invoke backend-owned persistence APIs through activities
 - Dedupe concurrent/retried workflow updates by `requestId`
-- Persist add/reject activity responses in `idempotency_records` to stay safe under Temporal retries
-- Persist close + complete atomically in one database transaction
-- Connect directly to the backend Postgres database over `DATABASE_URL`
+- Rely on backend idempotency records to stay safe under Temporal retries
+- Finalize the bill through a single backend API that closes and completes atomically
 - Run as its own Encore app, separate from the backend app
 
 ## Environment
-- `DATABASE_URL`: Postgres connection string for the backend database
+- `BACKEND_API_BASE_URL`: base URL for the backend API, e.g. `http://127.0.0.1:4000`
 - `TEMPORAL_ADDRESS`: Temporal server address, defaults to `localhost:7233`
 - `TEMPORAL_API_KEY`: optional Temporal Cloud API key; when set, the worker connects with TLS enabled
 - `TEMPORAL_NAMESPACE`: Temporal namespace, defaults to `default`
@@ -28,14 +27,14 @@ orchestration.
 ```bash
 cd /Users/gareth/workspace/pave-bill-application/workflow
 npm install
-export DATABASE_URL='postgres://...'
+export BACKEND_API_BASE_URL='http://127.0.0.1:4000'
 encore run
 ```
 
 Direct worker entrypoint:
 ```bash
 cd /Users/gareth/workspace/pave-bill-application/workflow
-export DATABASE_URL='postgres://...'
+export BACKEND_API_BASE_URL='http://127.0.0.1:4000'
 npm run worker
 ```
 
@@ -47,11 +46,16 @@ npm test
 ```
 
 ## Notes
-- Workflow update request payloads include `requestId` so the workflow can dedupe in-flight and completed retries.
-- Activities use raw Postgres connections through `DATABASE_URL`, pointing at the same schema the backend app reads and writes.
+- Workflow update request payloads include `requestId` so the workflow can dedupe concurrent in-flight updates.
+- Activities call backend workflow persistence endpoints over HTTP using `BACKEND_API_BASE_URL`.
 - The workflow keeps the persisted bill lifecycle aligned with the current backend model:
   `OPEN -> CLOSED -> COMPLETED`.
-- Backend write endpoints also keep their own `PENDING` / `COMPLETED` idempotency records. Workflow/activity idempotency is the second line of defense for Temporal retries and replay recovery.
+- Backend owns all SQL writes and idempotency records for both public endpoints and workflow persistence endpoints.
 - `createBill` is intentionally resumable rather than atomic across SQL commit and workflow start. Bills persist with `workflow_state='NOT_STARTED'` until backend successfully starts the Temporal workflow and marks them `STARTED`.
-- DB-backed activity tests run only when `DATABASE_URL` is set.
+- Activity tests mock backend API calls instead of connecting to Postgres.
 - [`workflow/encore.app`](/Users/gareth/workspace/pave-bill-application/workflow/encore.app) makes this directory its own Encore app root.
+
+## Accepted Risks
+- Because the workflow app is separate and invokes backend APIs over HTTP, the backend `/workflow/*` persistence endpoints are intentionally public.
+- This means external callers can hit those endpoints directly and bypass the intended public API orchestration path.
+- Idempotency still protects duplicate payload replays, but it does not stop a caller from issuing a new valid persistence request against those workflow endpoints.

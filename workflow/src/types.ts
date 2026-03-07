@@ -47,10 +47,20 @@ export interface CloseBillInput {
   billId: string;
 }
 
+export interface ChargedLineItem {
+  id: string;
+  description: string;
+  amount: string;
+  currency: Currency;
+  createdAt: string;
+}
+
 export interface CloseBillResponse {
   billId: string;
   status: "CLOSED";
   closedAt: string;
+  totalAmount: string;
+  lineItems: ChargedLineItem[];
 }
 
 export interface CompleteBillInput {

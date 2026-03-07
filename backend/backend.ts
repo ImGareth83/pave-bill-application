@@ -16,6 +16,7 @@ type BillStatus = "OPEN" | "CLOSED" | "COMPLETED";
 type LineItemStatus = "ADDED" | "REJECTED";
 type Currency = "USD" | "GEL";
 type QueryExecutor = Pick<Tx, "queryRow">;
+type BillReadExecutor = Pick<Tx, "queryRow" | "query">;
 
 interface CreateBillParams {
   currency: Currency;
@@ -37,6 +38,10 @@ interface AddLineItemParams {
   currency: Currency;
 }
 
+interface WorkflowAddLineItemParams extends AddLineItemParams {
+  requestId: string;
+}
+
 interface AddLineItemResponse {
   lineItemId: string;
   billId: string;
@@ -50,6 +55,10 @@ interface RejectLineItemParams {
   billId: string;
   lineItemId: string;
   reason: string;
+}
+
+interface WorkflowRejectLineItemParams extends RejectLineItemParams {
+  requestId: string;
 }
 
 interface RejectLineItemResponse {
@@ -68,9 +77,21 @@ interface CloseBillResponse {
   billId: string;
   status: "CLOSED";
   closedAt: string;
+  totalAmount: string;
+  lineItems: Array<{
+    id: string;
+    description: string;
+    amount: string;
+    currency: Currency;
+    createdAt: string;
+  }>;
 }
 
 interface CompleteBillParams {
+  billId: string;
+}
+
+interface WorkflowCloseAndCompleteBillParams {
   billId: string;
 }
 
@@ -260,6 +281,23 @@ export const addLineItem = api(
   }
 );
 
+export const workflowAddLineItem = api(
+  { expose: false, auth: false, method: "POST", path: "/workflow/bills/:billId/line-items" },
+  async (params: WorkflowAddLineItemParams): Promise<AddLineItemResponse> => {
+    return withIdempotency<AddLineItemResponse>(
+      `workflow_add_line_item:${params.billId}`,
+      params.requestId,
+      hashRequest({
+        billId: params.billId,
+        description: params.description,
+        amount: params.amount,
+        currency: params.currency
+      }),
+      async (tx) => persistAddLineItem(tx, params)
+    );
+  }
+);
+
 export const rejectLineItem = api(
   {
     expose: true,
@@ -295,6 +333,27 @@ export const rejectLineItem = api(
   }
 );
 
+export const workflowRejectLineItem = api(
+  {
+    expose: false,
+    auth: false,
+    method: "POST",
+    path: "/workflow/bills/:billId/line-items/:lineItemId/reject"
+  },
+  async (params: WorkflowRejectLineItemParams): Promise<RejectLineItemResponse> => {
+    return withIdempotency<RejectLineItemResponse>(
+      `workflow_reject_line_item:${params.billId}:${params.lineItemId}`,
+      params.requestId,
+      hashRequest({
+        billId: params.billId,
+        lineItemId: params.lineItemId,
+        reason: params.reason
+      }),
+      async (tx) => persistRejectLineItem(tx, params)
+    );
+  }
+);
+
 export const closeBill = api(
   { expose: true, auth: false, method: "POST", path: "/bills/:billId/close" },
   async (params: CloseBillParams): Promise<CloseBillResponse> => {
@@ -317,11 +376,7 @@ export const closeBill = api(
       reconcilePending: async () => {
         const bill = await fetchBill(db, params.billId);
         if ((bill.status === "CLOSED" || bill.status === "COMPLETED") && bill.closed_at) {
-          return {
-            billId: bill.id,
-            status: "CLOSED",
-            closedAt: asDate(bill.closed_at).toISOString()
-          };
+          return buildCloseBillResponse(db, bill);
         }
         return null;
       }
@@ -346,6 +401,25 @@ export const completeBill = api(
       totalAmount: formatMinor(bill.total_minor),
       completedAt: asDate(bill.completed_at as Date | string).toISOString()
     };
+  }
+);
+
+export const workflowCloseAndCompleteBill = api(
+  { expose: false, auth: false, method: "POST", path: "/workflow/bills/:billId/finalize" },
+  async (params: WorkflowCloseAndCompleteBillParams): Promise<{
+    close: CloseBillResponse;
+    complete: CompleteBillResponse;
+  }> => {
+    const tx = await db.begin();
+    try {
+      const close = await persistCloseBill(tx, params.billId);
+      const complete = await persistCompleteBill(tx, params.billId);
+      await tx.commit();
+      return { close, complete };
+    } catch (err) {
+      await tx.rollback();
+      throw err;
+    }
   }
 );
 
@@ -697,6 +771,200 @@ async function fetchBillForUpdate(tx: Tx, billId: string): Promise<BillRow> {
   return bill;
 }
 
+async function persistAddLineItem(
+  tx: Tx,
+  params: WorkflowAddLineItemParams
+): Promise<AddLineItemResponse> {
+  const bill = await fetchBillForUpdate(tx, params.billId);
+  if (bill.status !== "OPEN") {
+    throw invalid("BillNotOpen", "line item additions are allowed only for OPEN bills");
+  }
+
+  validateCurrency(params.currency);
+  if (bill.currency !== params.currency) {
+    throw invalid("CurrencyMismatch", "line item currency must match bill currency");
+  }
+
+  const description = normalizeText(params.description, "description");
+  const amountMinor = parseAmountToMinor(params.amount);
+  const lineItemId = uuidv7();
+
+  const inserted = await tx.queryRow<{ created_at: Date | string }>`
+    INSERT INTO bill_line_items (id, bill_id, description, amount_minor, currency, status)
+    VALUES (${lineItemId}, ${params.billId}, ${description}, ${amountMinor}, ${params.currency}, 'ADDED')
+    RETURNING created_at
+  `;
+
+  if (!inserted) {
+    throw APIError.internal("failed to create line item");
+  }
+
+  return {
+    lineItemId,
+    billId: params.billId,
+    description,
+    amount: formatMinor(amountMinor),
+    status: "ADDED",
+    createdAt: asDate(inserted.created_at).toISOString()
+  };
+}
+
+async function persistRejectLineItem(
+  tx: Tx,
+  params: WorkflowRejectLineItemParams
+): Promise<RejectLineItemResponse> {
+  const bill = await fetchBillForUpdate(tx, params.billId);
+  if (bill.status !== "OPEN") {
+    throw invalid("BillNotOpen", "line item rejection is allowed only for OPEN bills");
+  }
+
+  const reason = normalizeText(params.reason, "reason");
+  const lineItem = await fetchLineItemForUpdate(tx, params.billId, params.lineItemId);
+  if (lineItem.status === "REJECTED") {
+    throw invalid("LineItemAlreadyRejected", "rejected item cannot change status");
+  }
+
+  const updated = await tx.queryRow<{ rejected_at: Date | string }>`
+    UPDATE bill_line_items
+    SET status = 'REJECTED', rejected_at = now(), rejection_reason = ${reason}
+    WHERE id = ${params.lineItemId} AND bill_id = ${params.billId}
+    RETURNING rejected_at
+  `;
+
+  if (!updated) {
+    throw APIError.internal("failed to reject line item");
+  }
+
+  return {
+    lineItemId: params.lineItemId,
+    billId: params.billId,
+    status: "REJECTED",
+    rejectedAt: asDate(updated.rejected_at).toISOString(),
+    reason
+  };
+}
+
+async function persistCloseBill(tx: Tx, billId: string): Promise<CloseBillResponse> {
+  const bill = await fetchBillForUpdate(tx, billId);
+
+  if (bill.status === "OPEN") {
+    const updated = await tx.queryRow<{ closed_at: Date | string }>`
+      UPDATE bills
+      SET status = 'CLOSED', closed_at = now()
+      WHERE id = ${billId}
+      RETURNING closed_at
+    `;
+
+    if (!updated) {
+      throw APIError.internal("failed to close bill");
+    }
+
+    return buildCloseBillResponse(tx, {
+      ...bill,
+      status: "CLOSED",
+      closed_at: updated.closed_at
+    });
+  }
+
+  if ((bill.status === "CLOSED" || bill.status === "COMPLETED") && bill.closed_at) {
+    return buildCloseBillResponse(tx, bill);
+  }
+
+  throw invalid("BillNotOpen", "only OPEN bills can be closed");
+}
+
+async function buildCloseBillResponse(
+  executor: BillReadExecutor,
+  bill: Pick<BillRow, "id" | "currency" | "closed_at" | "status" | "total_minor">
+): Promise<CloseBillResponse> {
+  const lineItems = await listChargeableLineItems(executor, bill.id);
+  const totalMinor = bill.status === "COMPLETED"
+    ? toBigInt(bill.total_minor)
+    : lineItems.reduce((sum, item) => sum + toBigInt(item.amount_minor), 0n);
+
+  return {
+    billId: bill.id,
+    status: "CLOSED",
+    closedAt: asDate(bill.closed_at as Date | string).toISOString(),
+    totalAmount: formatMinor(totalMinor),
+    lineItems: lineItems.map((item) => ({
+      id: item.id,
+      description: item.description,
+      amount: formatMinor(item.amount_minor),
+      currency: item.currency,
+      createdAt: asDate(item.created_at).toISOString()
+    }))
+  };
+}
+
+async function listChargeableLineItems(
+  executor: BillReadExecutor,
+  billId: string
+): Promise<Array<Pick<LineItemRow, "id" | "description" | "amount_minor" | "currency" | "created_at">>> {
+  const rows = executor.query<LineItemRow>`
+    SELECT id, description, amount_minor, currency, created_at, bill_id, status, rejection_reason, rejected_at
+    FROM bill_line_items
+    WHERE bill_id = ${billId} AND status = 'ADDED'
+    ORDER BY created_at ASC
+  `;
+
+  const items: Array<
+    Pick<LineItemRow, "id" | "description" | "amount_minor" | "currency" | "created_at">
+  > = [];
+  for await (const row of rows) {
+    items.push({
+      id: row.id,
+      description: row.description,
+      amount_minor: row.amount_minor,
+      currency: row.currency,
+      created_at: row.created_at
+    });
+  }
+  return items;
+}
+
+async function persistCompleteBill(tx: Tx, billId: string): Promise<CompleteBillResponse> {
+  const bill = await fetchBillForUpdate(tx, billId);
+
+  if (bill.status === "COMPLETED" && bill.completed_at) {
+    return {
+      billId,
+      status: "COMPLETED",
+      totalAmount: formatMinor(bill.total_minor),
+      completedAt: asDate(bill.completed_at).toISOString()
+    };
+  }
+
+  if (bill.status !== "CLOSED") {
+    throw invalid("BillNotClosed", "only CLOSED bills can be completed");
+  }
+
+  const totalRow = await tx.queryRow<{ total_minor: string | number | bigint }>`
+    SELECT COALESCE(SUM(amount_minor), 0) AS total_minor
+    FROM bill_line_items
+    WHERE bill_id = ${billId} AND status = 'ADDED'
+  `;
+  const totalMinor = BigInt(totalRow ? totalRow.total_minor : 0);
+
+  const updated = await tx.queryRow<{ completed_at: Date | string }>`
+    UPDATE bills
+    SET status = 'COMPLETED', completed_at = now(), total_minor = ${totalMinor}
+    WHERE id = ${billId}
+    RETURNING completed_at
+  `;
+
+  if (!updated) {
+    throw APIError.internal("failed to complete bill");
+  }
+
+  return {
+    billId,
+    status: "COMPLETED",
+    totalAmount: formatMinor(totalMinor),
+    completedAt: asDate(updated.completed_at).toISOString()
+  };
+}
+
 async function fetchLineItemForUpdate(
   tx: Tx,
   billId: string,
@@ -809,6 +1077,14 @@ function parseAmountToMinor(input: string): bigint {
   return minor;
 }
 
+function normalizeText(value: string, field: string): string {
+  const normalized = value?.trim();
+  if (!normalized) {
+    throw invalid(`Invalid${capitalize(field)}`, `${field} is required`);
+  }
+  return normalized;
+}
+
 function formatMinor(amount: string | number | bigint): string {
   const minor = toBigInt(amount);
   const abs = minor < 0n ? -minor : minor;
@@ -862,6 +1138,10 @@ function isUniqueViolation(err: unknown): boolean {
 
   const maybeCode = (err as { code?: string }).code;
   return maybeCode === "23505";
+}
+
+function capitalize(value: string): string {
+  return value.length === 0 ? value : `${value[0].toUpperCase()}${value.slice(1)}`;
 }
 
 function workflowIdForBill(billId: string): string {

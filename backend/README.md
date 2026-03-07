@@ -49,9 +49,17 @@ Health endpoints:
 
 Notes:
 - `status` is required on `GET /bills`.
+- `POST /bills/:billId/close` returns the charged total and included line items for the close operation.
 - Invoice retrieval is allowed only when the bill status is `COMPLETED`.
 - Rejected line items are excluded from invoice totals.
 - `POST /bills/:billId/complete` no longer performs completion. It only returns completion data if the workflow has already completed the bill; otherwise it returns `BillCompletionManagedByWorkflow`.
+- `/workflow/*` persistence endpoints are intentionally public so the separate workflow app can invoke them over HTTP.
+
+### Accepted Risks
+- The public `/workflow/*` endpoints let external callers bypass the intended public API flow and invoke workflow persistence operations directly.
+- Idempotency still protects against duplicate requests within a scope, but it does not prevent a caller from submitting a new valid mutation through a workflow endpoint.
+- A caller with bill identifiers can force add/reject/finalize operations outside the intended backend-to-workflow boundary.
+- This tradeoff is accepted for local-dev and simple deployment ergonomics with a separate workflow app using `http://127.0.0.1:4000` as the backend base URL.
 
 ### Example: Liveness
 ```bash

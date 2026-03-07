@@ -1,5 +1,23 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+function buildCloseResponse() {
+  return {
+    billId: "bill_001",
+    status: "CLOSED" as const,
+    closedAt: "2026-03-07T00:00:00.000Z",
+    totalAmount: "12.50",
+    lineItems: [
+      {
+        id: "li_001",
+        description: "Trading Fee",
+        amount: "12.50",
+        currency: "USD" as const,
+        createdAt: "2026-03-07T00:00:00.000Z"
+      }
+    ]
+  };
+}
+
 const workflowMockState = vi.hoisted(() => {
   const handlers = new Map<string, (input: unknown) => Promise<unknown>>();
 
@@ -8,11 +26,7 @@ const workflowMockState = vi.hoisted(() => {
     addLineItem: vi.fn(async (input: unknown) => input),
     rejectLineItem: vi.fn(async (input: unknown) => input),
     closeAndCompleteBill: vi.fn(async (_billId: string) => ({
-      close: {
-        billId: "bill_001",
-        status: "CLOSED" as const,
-        closedAt: "2026-03-07T00:00:00.000Z"
-      },
+      close: buildCloseResponse(),
       complete: {
         billId: "bill_001",
         status: "COMPLETED" as const,
@@ -29,11 +43,7 @@ const workflowMockState = vi.hoisted(() => {
       addLineItem: vi.fn(async (input: unknown) => input),
       rejectLineItem: vi.fn(async (input: unknown) => input),
       closeAndCompleteBill: vi.fn(async (_billId: string) => ({
-        close: {
-          billId: "bill_001",
-          status: "CLOSED" as const,
-          closedAt: "2026-03-07T00:00:00.000Z"
-        },
+        close: buildCloseResponse(),
         complete: {
           billId: "bill_001",
           status: "COMPLETED" as const,
@@ -190,11 +200,7 @@ describe("billPeriodWorkflow", () => {
     );
 
     const closeAndCompleteBill = vi.fn(async () => ({
-      close: {
-        billId: "bill_001",
-        status: "CLOSED" as const,
-        closedAt: "2026-03-07T00:00:00.000Z"
-      },
+      close: buildCloseResponse(),
       complete: {
         billId: "bill_001",
         status: "COMPLETED" as const,
@@ -220,11 +226,7 @@ describe("billPeriodWorkflow", () => {
     const closeResult = await closeHandler({ requestId: "close-1", billId: "bill_001" });
     const finalResult = await workflowPromise;
 
-    expect(closeResult).toEqual({
-      billId: "bill_001",
-      status: "CLOSED",
-      closedAt: "2026-03-07T00:00:00.000Z"
-    });
+    expect(closeResult).toEqual(buildCloseResponse());
     expect(finalResult).toEqual({
       billId: "bill_001",
       status: "COMPLETED",
@@ -249,11 +251,7 @@ describe("billPeriodWorkflow", () => {
         new Promise((resolve) => {
           releaseLifecycle = () =>
             resolve({
-              close: {
-                billId: "bill_001",
-                status: "CLOSED" as const,
-                closedAt: "2026-03-07T00:00:00.000Z"
-              },
+              close: buildCloseResponse(),
               complete: {
                 billId: "bill_001",
                 status: "COMPLETED" as const,
@@ -285,16 +283,8 @@ describe("billPeriodWorkflow", () => {
 
     releaseLifecycle();
 
-    await expect(first).resolves.toEqual({
-      billId: "bill_001",
-      status: "CLOSED",
-      closedAt: "2026-03-07T00:00:00.000Z"
-    });
-    await expect(second).resolves.toEqual({
-      billId: "bill_001",
-      status: "CLOSED",
-      closedAt: "2026-03-07T00:00:00.000Z"
-    });
+    await expect(first).resolves.toEqual(buildCloseResponse());
+    await expect(second).resolves.toEqual(buildCloseResponse());
     expect(closeAndCompleteBill).toHaveBeenCalledTimes(1);
   });
 
@@ -313,11 +303,7 @@ describe("billPeriodWorkflow", () => {
           new Promise((resolve) => {
             releaseLifecycle = () =>
               resolve({
-                close: {
-                  billId: "bill_001",
-                  status: "CLOSED" as const,
-                  closedAt: "2026-03-07T00:00:00.000Z"
-                },
+                close: buildCloseResponse(),
                 complete: {
                   billId: "bill_001",
                   status: "COMPLETED" as const,
@@ -371,11 +357,7 @@ describe("billPeriodWorkflow", () => {
   test("auto-closes at period end and runs lifecycle once", async () => {
     workflowMockState.setSleep(async () => undefined);
     const closeAndCompleteBill = vi.fn(async () => ({
-      close: {
-        billId: "bill_001",
-        status: "CLOSED" as const,
-        closedAt: "2026-03-07T00:00:00.000Z"
-      },
+      close: buildCloseResponse(),
       complete: {
         billId: "bill_001",
         status: "COMPLETED" as const,

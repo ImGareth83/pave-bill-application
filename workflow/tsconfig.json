@@ -5,6 +5,9 @@
     "target": "ES2022",
     "module": "ES2022",
     "types": ["node"],
+    "paths": {
+      "~encore/*": ["./encore.gen/*"]
+    },
     "strict": true,
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
@@ -14,6 +17,6 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules/**/*"]
+  "include": ["./**/*.ts"],
+  "exclude": ["./encore.gen/**/*", "./node_modules/**/*"]
 }
