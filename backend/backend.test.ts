@@ -55,7 +55,14 @@ const mockState = vi.hoisted(() => {
     }
   >();
 
-  const temporal = {
+  type TemporalMocks = {
+    connect: ReturnType<typeof vi.fn>;
+    start: ReturnType<typeof vi.fn>;
+    executeUpdate: ReturnType<typeof vi.fn>;
+    getHandle: ReturnType<typeof vi.fn>;
+  };
+
+  const temporal: TemporalMocks = {
     connect: vi.fn<() => Promise<{ kind: string }>>(async () => ({ kind: "connection" })),
     start: vi.fn<(...args: unknown[]) => Promise<unknown>>(async () => ({ workflowId: "unused" })),
     executeUpdate: vi.fn<(...args: unknown[]) => Promise<unknown>>(async () => {
@@ -281,7 +288,7 @@ vi.mock("encore.dev/storage/sqldb", () => ({
   SQLDatabase: mockState.MockSQLDatabase
 }));
 
-vi.mock("../lib/database", () => ({
+vi.mock("./db", () => ({
   db: new mockState.MockSQLDatabase("backend", { migrations: "./backend/migrations" })
 }));
 

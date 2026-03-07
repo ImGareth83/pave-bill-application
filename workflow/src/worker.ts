@@ -7,10 +7,9 @@ const taskQueue = process.env.TEMPORAL_TASK_QUEUE?.trim() || "billing-periods";
 const address = process.env.TEMPORAL_ADDRESS?.trim() || "localhost:7233";
 const apiKey = process.env.TEMPORAL_API_KEY?.trim() || undefined;
 const namespace = process.env.TEMPORAL_NAMESPACE?.trim() || "default";
-
 let workerStartPromise: Promise<void> | undefined;
 
-async function runWorker(): Promise<void> {
+export async function runWorker(): Promise<void> {
   const connection = await NativeConnection.connect({
     address,
     apiKey,

@@ -20,6 +20,7 @@ This service is the public Encore API for bill management.
 
 ## Run locally
 ```bash
+cd /Users/gareth/workspace/pave-bill-application/backend
 encore run
 ```
 
@@ -123,21 +124,19 @@ Expected behavior:
 ## Testing
 Run backend unit tests:
 ```bash
-npm run test:backend
+cd /Users/gareth/workspace/pave-bill-application/backend
+npm test
 ```
 
-Run workflow tests from the repo root:
+Run Encore-managed tests for the backend app:
 ```bash
-npm run test:workflow
-```
-
-Run Encore-managed tests, including DB-backed workflow activity tests:
-```bash
+cd /Users/gareth/workspace/pave-bill-application/backend
 encore test
 ```
 
 ## Database access
 ```bash
+cd /Users/gareth/workspace/pave-bill-application/backend
 encore db shell backend
 ```
 

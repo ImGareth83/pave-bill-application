@@ -2,15 +2,17 @@
   "name": "pave-bill-application",
   "private": true,
   "version": "0.0.1",
-  "description": "Encore billing application with backend and workflow services",
+  "description": "Monorepo for the Encore billing backend and Temporal workflow worker",
   "license": "MPL-2.0",
   "type": "module",
   "scripts": {
-    "test": "vitest run workflow/src/domain.test.ts workflow/src/workflows/bill-period.test.ts workflow/src/activities/bill-activities.db.test.ts",
-    "test:workflow": "vitest run workflow/src/domain.test.ts workflow/src/workflows/bill-period.test.ts workflow/src/activities/bill-activities.db.test.ts",
-    "test:backend": "NODE_ENV=test vitest run backend/backend.test.ts",
-    "typecheck": "tsc --noEmit",
-    "worker": "tsx workflow/src/worker.ts"
+    "test": "npm run test:backend && npm run test:workflow",
+    "test:backend": "npm --prefix backend test",
+    "test:workflow": "npm --prefix workflow test",
+    "typecheck": "npm run typecheck:backend && npm run typecheck:workflow",
+    "typecheck:backend": "npm --prefix backend run typecheck",
+    "typecheck:workflow": "npm --prefix workflow run typecheck",
+    "worker": "npm --prefix workflow run worker"
   },
   "dependencies": {
     "@temporalio/activity": "^1.11.5",

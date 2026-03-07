@@ -1,0 +1,23 @@
+{
+  "name": "pave-bill-backend",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Encore billing backend application",
+  "license": "MPL-2.0",
+  "type": "module",
+  "scripts": {
+    "test": "NODE_ENV=test vitest run backend.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@temporalio/client": "^1.11.5",
+    "encore.dev": "^1.54.2",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.7",
+    "typescript": "^5.2.2",
+    "vite": "^5.4.10",
+    "vitest": "^2.1.4"
+  }
+}

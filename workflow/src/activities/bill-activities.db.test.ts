@@ -1,8 +1,8 @@
 import { afterEach, beforeAll, describe, expect, test } from "vitest";
 import { v7 as uuidv7 } from "uuid";
 
-const hasEncoreRuntime = Boolean(process.env.ENCORE_RUNTIME_LIB);
-const describeDb = hasEncoreRuntime ? describe.sequential : describe.skip;
+const hasDatabaseUrl = Boolean(process.env.DATABASE_URL?.trim());
+const describeDb = hasDatabaseUrl ? describe.sequential : describe.skip;
 
 describeDb("bill activities database integration", () => {
   let dbModule: typeof import("../db");
@@ -186,8 +186,8 @@ async function seedOpenBill(
 ): Promise<void> {
   await db.rawExec(
     `
-      INSERT INTO bills (id, currency, status, period_start, period_end)
-      VALUES ($1, $2, 'OPEN', $3, $4)
+      INSERT INTO bills (id, currency, status, workflow_state, period_start, period_end)
+      VALUES ($1, $2, 'OPEN', 'STARTED', $3, $4)
     `,
     billId,
     currency,

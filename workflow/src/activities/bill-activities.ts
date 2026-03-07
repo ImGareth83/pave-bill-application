@@ -341,15 +341,12 @@ async function storeIdempotentResponse<T extends object>(
   response: T
 ): Promise<T> {
   try {
-    await client.rawExec(
+    await client.query(
       `
         INSERT INTO idempotency_records (scope, idem_key, request_hash, response_json, http_code)
         VALUES ($1, $2, $3, $4, 200)
       `,
-      scope,
-      requestId,
-      requestHash,
-      response as object
+      [scope, requestId, requestHash, response as object]
     );
     return response;
   } catch (error) {
