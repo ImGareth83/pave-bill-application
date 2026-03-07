@@ -28,6 +28,10 @@ npm install
 npm run worker
 ```
 
+In Encore Cloud and `encore run`, the worker is also started automatically from the
+`workflow` service. The standalone `npm run worker` entrypoint is mainly useful for
+explicit local worker runs.
+
 ## Verify
 ```bash
 cd /Users/gareth/workspace/pave-bill-application
@@ -42,3 +46,4 @@ npm run test:workflow
   `OPEN -> CLOSED -> COMPLETED`.
 - Backend write endpoints also keep their own `PENDING` / `COMPLETED` idempotency records. Workflow/activity idempotency is the second line of defense for Temporal retries and replay recovery.
 - `createBill` is intentionally resumable rather than atomic across SQL commit and workflow start. Bills persist with `workflow_state='NOT_STARTED'` until backend successfully starts the Temporal workflow and marks them `STARTED`.
+- The worker startup is guarded during tests with `NODE_ENV=test`. You can also disable automatic startup with `DISABLE_TEMPORAL_WORKER=1`.
