@@ -2,6 +2,28 @@
 
 This service is the public Encore API for bill management.
 
+## Deployment Model
+- Backend API runs on Encore Cloud.
+- Temporal orchestration runs on Temporal Cloud.
+- The Temporal worker runs outside Encore Cloud on AWS EC2 from the [`workflow/`](../workflow/README.md) package.
+- The backend starts and updates Temporal workflows directly; it does not call the worker by URL.
+
+## Requirement Alignment
+- One Temporal workflow is started per bill: `bill/<billId>`.
+- Workflow state transitions remain `OPEN -> CLOSED -> COMPLETED`.
+- Add and reject mutations are accepted only while the bill is open.
+- `closeBill` returns the charged total and charged line items at close time.
+- Invoice reads are allowed only after completion and exclude rejected line items.
+- Public POST endpoints remain idempotent through `Idempotency-Key`.
+- Backend owns all SQL writes, idempotency records, and replay recovery logic.
+
+## Assumptions
+- Backend and worker share the same Temporal Cloud address, namespace, task queue, and API key.
+- The external worker is allowed to call backend `/workflow/*` persistence endpoints over public HTTPS.
+- `TEMPORAL_ADDRESS` and `TEMPORAL_NAMESPACE` are required configuration.
+- `TEMPORAL_API_KEY` is configured as an Encore secret for Temporal Cloud.
+- `TEMPORAL_TASK_QUEUE` defaults to `billing-periods` when not explicitly set.
+
 ## Features
 - Create bills
 - Start one Temporal workflow per bill period
@@ -38,6 +60,18 @@ Developer dashboard:
 API base URL:
 - http://127.0.0.1:4000
 
+## Encore Cloud Setup
+Required backend secrets/config in the Encore app environment:
+- `TEMPORAL_ADDRESS=ap-southeast-1.aws.api.temporal.io:7233`
+- `TEMPORAL_NAMESPACE=pave-bank-workflow.s1uvj`
+- `TEMPORAL_TASK_QUEUE=billing-periods`
+- `TEMPORAL_API_KEY=<Temporal Cloud API key>`
+
+Operational notes:
+- The backend now reads Temporal settings through Encore config/secrets instead of relying on plain `process.env` defaults in cloud.
+- Missing Temporal config should fail fast instead of silently falling back to `localhost:7233` and `default`.
+- The worker base URL is not configured here; backend talks to Temporal Cloud directly.
+
 Health endpoints:
 - `GET /livez`
 - `GET /readyz`
@@ -68,6 +102,7 @@ Notes:
 - Idempotency still protects against duplicate requests within a scope, but it does not prevent a caller from submitting a new valid mutation through a workflow endpoint.
 - A caller with bill identifiers can force add/reject/finalize operations outside the intended backend-to-workflow boundary.
 - This tradeoff is accepted because the worker now runs outside Encore Cloud on EC2 and must reach backend persistence APIs over public HTTP.
+- Post-completion mutations are rejected as business errors, but the backend still depends on Temporal workflow lifecycle state to distinguish a completed workflow from a live one.
 
 ### Example: Liveness
 ```bash
