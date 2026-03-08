@@ -340,10 +340,15 @@ beforeEach(() => {
   process.env.TEMPORAL_ADDRESS = "temporal.test:7233";
   process.env.TEMPORAL_NAMESPACE = "test-namespace";
   process.env.TEMPORAL_TASK_QUEUE = "billing-periods";
+  process.env.TEMPORAL_API_KEY = "test-api-key";
 });
 
 afterEach(() => {
   delete process.env.TEST_IDEMPOTENCY_KEY;
+  delete process.env.TEMPORAL_ADDRESS;
+  delete process.env.TEMPORAL_NAMESPACE;
+  delete process.env.TEMPORAL_TASK_QUEUE;
+  delete process.env.TEMPORAL_API_KEY;
 });
 
 async function loadBackend() {

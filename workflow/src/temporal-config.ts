@@ -1,23 +1,25 @@
 import { secret } from "encore.dev/config";
 
+const temporalAddressSecret = secret("TEMPORAL_ADDRESS");
 const temporalApiKeySecret = secret("TEMPORAL_API_KEY");
+const temporalNamespaceSecret = secret("TEMPORAL_NAMESPACE");
+const temporalTaskQueueSecret = secret("TEMPORAL_TASK_QUEUE");
 
 export function temporalTaskQueue(): string {
-  return process.env.TEMPORAL_TASK_QUEUE?.trim() || "billing-periods";
+  return readRequiredSecret(temporalTaskQueueSecret);
 }
 
 export function temporalAddress(): string {
-  return requiredEnv("TEMPORAL_ADDRESS");
+  return readRequiredSecret(temporalAddressSecret);
 }
 
 export function temporalNamespace(): string {
-  return requiredEnv("TEMPORAL_NAMESPACE");
+  return readRequiredSecret(temporalNamespaceSecret);
 }
 
 export function temporalApiKey(): string | undefined {
   try {
-    const value = temporalApiKeySecret().trim();
-    return value ? value : undefined;
+    return readRequiredSecret(temporalApiKeySecret);
   } catch (error) {
     if (isSecretNotSet(error)) {
       return undefined;
@@ -26,10 +28,10 @@ export function temporalApiKey(): string | undefined {
   }
 }
 
-function requiredEnv(name: string): string {
-  const value = process.env[name]?.trim();
+function readRequiredSecret(secretValue: () => string): string {
+  const value = secretValue().trim();
   if (!value) {
-    throw new Error(`${name} is required`);
+    throw new Error(`${secretValue.name} is required`);
   }
   return value;
 }
