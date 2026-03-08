@@ -17,11 +17,11 @@ orchestration.
 - Run as its own Encore app, separate from the backend app
 
 ## Environment
-- `BACKEND_API_BASE_URL`: backend API base URL, configured as an Encore secret, e.g. `http://127.0.0.1:4000`
+- `BACKEND_API_BASE_URL`: required backend API base URL, e.g. `http://127.0.0.1:4000`
 - `TEMPORAL_ADDRESS`: required Temporal server address
-- `TEMPORAL_API_KEY`: Temporal Cloud API key should be configured as an Encore secret; when set, the worker connects with TLS enabled
+- `TEMPORAL_API_KEY`: optional Temporal Cloud API key; when set, the worker connects with TLS enabled
 - `TEMPORAL_NAMESPACE`: required Temporal namespace
-- `TEMPORAL_TASK_QUEUE`: Task queue name, defaults to `billing-periods`
+- `TEMPORAL_TASK_QUEUE`: required task queue name
 
 ## Run
 ```bash

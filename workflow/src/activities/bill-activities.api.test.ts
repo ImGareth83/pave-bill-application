@@ -2,16 +2,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 const fetchMock = vi.fn<typeof fetch>();
 
-vi.mock("encore.dev/config", () => ({
-  secret: (name: string) => () => {
-    const value = process.env[name]?.trim();
-    if (!value) {
-      throw new Error(`secret ${name} is not set`);
-    }
-    return value;
-  }
-}));
-
 describe("bill activities backend api integration", () => {
   beforeEach(() => {
     vi.resetModules();
