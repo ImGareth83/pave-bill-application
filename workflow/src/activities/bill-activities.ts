@@ -1,4 +1,5 @@
 import { ApplicationFailure } from "@temporalio/common";
+import { secret } from "encore.dev/config";
 
 import type {
   AddLineItemInput,
@@ -9,6 +10,7 @@ import type {
   RejectLineItemResponse
 } from "../types";
 
+const backendApiBaseUrlSecret = secret("BACKEND_API_BASE_URL");
 const backendBaseUrl = resolveBackendBaseUrl();
 
 export const billActivities = {
@@ -147,7 +149,7 @@ function mapFailureType(status: number): string {
 }
 
 function resolveBackendBaseUrl(): string {
-  const configured = process.env.BACKEND_API_BASE_URL?.trim();
+  const configured = backendApiBaseUrlSecret().trim();
   if (!configured) {
     throw new Error("BACKEND_API_BASE_URL is required for workflow backend api calls");
   }
