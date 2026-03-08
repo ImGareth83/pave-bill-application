@@ -1,0 +1,73 @@
+name: Workflow Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "workflow/**"
+      - ".github/workflows/workflow-deploy.yml"
+
+concurrency:
+  group: workflow-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-workflow:
+    name: deploy-workflow
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        shell: bash
+        env:
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          if [ -z "$EC2_SSH_KEY" ]; then
+            echo "Missing EC2_SSH_KEY GitHub secret."
+            exit 1
+          fi
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Add EC2 host key
+        shell: bash
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          if [ -z "$EC2_HOST" ]; then
+            echo "Missing EC2_HOST GitHub secret."
+            exit 1
+          fi
+
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy worker to EC2
+        shell: bash
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        run: |
+          if [ -z "$EC2_USER" ]; then
+            echo "Missing EC2_USER GitHub secret."
+            exit 1
+          fi
+
+          ssh "$EC2_USER@$EC2_HOST" '
+            set -e
+            cd ~/pave-bill-application
+            git pull --ff-only
+            cd workflow
+            npm install
+            sudo systemctl restart pave-bill-worker
+            sudo systemctl status --no-pager pave-bill-worker
+          '
