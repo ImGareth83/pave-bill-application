@@ -21,8 +21,16 @@ This service is the public Encore API for bill management.
 ## Run locally
 ```bash
 cd /Users/gareth/workspace/pave-bill-application/backend
+export TEMPORAL_ADDRESS='localhost:7233'
+export TEMPORAL_NAMESPACE='default'
 encore run
 ```
+
+Temporal configuration:
+- `TEMPORAL_ADDRESS` is required.
+- `TEMPORAL_NAMESPACE` is required.
+- `TEMPORAL_TASK_QUEUE` defaults to `billing-periods`.
+- `TEMPORAL_API_KEY` should be configured as an Encore secret for Temporal Cloud; when unset, the backend connects without API-key TLS.
 
 Developer dashboard:
 - http://localhost:9400

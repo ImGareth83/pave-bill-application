@@ -10,6 +10,7 @@ import {
 } from "@temporalio/client";
 import { createHash } from "node:crypto";
 import { v7 as uuidv7 } from "uuid";
+import { temporalAddress, temporalApiKey, temporalNamespace, temporalTaskQueue } from "./config";
 import { db, type Tx } from "./db";
 
 type BillStatus = "OPEN" | "CLOSED" | "COMPLETED";
@@ -1148,24 +1149,11 @@ function workflowIdForBill(billId: string): string {
   return `bill/${billId}`;
 }
 
-function temporalTaskQueue(): string {
-  return process.env.TEMPORAL_TASK_QUEUE?.trim() || "billing-periods";
-}
-
-function temporalAddress(): string {
-  return process.env.TEMPORAL_ADDRESS?.trim() || "localhost:7233";
-}
-
-function temporalApiKey(): string | undefined {
-  const value = process.env.TEMPORAL_API_KEY?.trim();
-  return value ? value : undefined;
-}
-
 async function getTemporalConnection(): Promise<TemporalConnection> {
   const apiKey = temporalApiKey();
   console.info("initializing temporal connection", {
     address: temporalAddress(),
-    namespace: process.env.TEMPORAL_NAMESPACE?.trim() || "default",
+    namespace: temporalNamespace(),
     taskQueue: temporalTaskQueue(),
     hasApiKey: Boolean(apiKey)
   });
@@ -1180,7 +1168,7 @@ async function getTemporalConnection(): Promise<TemporalConnection> {
 async function getTemporalClient(): Promise<TemporalClient> {
   console.info("initializing temporal client", {
     address: temporalAddress(),
-    namespace: process.env.TEMPORAL_NAMESPACE?.trim() || "default",
+    namespace: temporalNamespace(),
     taskQueue: temporalTaskQueue(),
     hasApiKey: Boolean(temporalApiKey())
   });
@@ -1188,7 +1176,7 @@ async function getTemporalClient(): Promise<TemporalClient> {
     (connection) =>
       new TemporalClient({
         connection,
-        namespace: process.env.TEMPORAL_NAMESPACE?.trim() || "default"
+        namespace: temporalNamespace()
       })
   );
   return temporalClientPromise;
@@ -1205,7 +1193,7 @@ async function startBillWorkflow(input: {
       workflowId: workflowIdForBill(input.billId),
       billId: input.billId,
       address: temporalAddress(),
-      namespace: process.env.TEMPORAL_NAMESPACE?.trim() || "default",
+      namespace: temporalNamespace(),
       taskQueue: temporalTaskQueue()
     });
     const client = await getTemporalClient();
@@ -1230,7 +1218,7 @@ async function startBillWorkflow(input: {
       workflowId: workflowIdForBill(input.billId),
       billId: input.billId,
       address: temporalAddress(),
-      namespace: process.env.TEMPORAL_NAMESPACE?.trim() || "default",
+      namespace: temporalNamespace(),
       taskQueue: temporalTaskQueue()
     });
     throw mapTemporalError(error);
@@ -1248,7 +1236,7 @@ async function executeBillWorkflowUpdate<T>(
       billId,
       updateName,
       address: temporalAddress(),
-      namespace: process.env.TEMPORAL_NAMESPACE?.trim() || "default",
+      namespace: temporalNamespace(),
       taskQueue: temporalTaskQueue()
     });
     const client = await getTemporalClient();
@@ -1260,7 +1248,7 @@ async function executeBillWorkflowUpdate<T>(
       billId,
       updateName,
       address: temporalAddress(),
-      namespace: process.env.TEMPORAL_NAMESPACE?.trim() || "default",
+      namespace: temporalNamespace(),
       taskQueue: temporalTaskQueue()
     });
     throw mapTemporalError(error);

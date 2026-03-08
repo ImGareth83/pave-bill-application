@@ -2,14 +2,15 @@ import { NativeConnection, Worker } from "@temporalio/worker";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { billActivities } from "./activities/bill-activities";
+import { temporalAddress, temporalApiKey, temporalNamespace, temporalTaskQueue } from "./temporal-config";
 
-const taskQueue = process.env.TEMPORAL_TASK_QUEUE?.trim() || "billing-periods";
-const address = process.env.TEMPORAL_ADDRESS?.trim() || "localhost:7233";
-const apiKey = process.env.TEMPORAL_API_KEY?.trim() || undefined;
-const namespace = process.env.TEMPORAL_NAMESPACE?.trim() || "default";
 let workerStartPromise: Promise<void> | undefined;
 
 export async function runWorker(): Promise<void> {
+  const taskQueue = temporalTaskQueue();
+  const address = temporalAddress();
+  const apiKey = temporalApiKey();
+  const namespace = temporalNamespace();
   console.info("starting temporal worker", {
     address,
     namespace,

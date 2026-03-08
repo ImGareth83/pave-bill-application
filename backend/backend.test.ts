@@ -289,6 +289,18 @@ vi.mock("encore.dev", () => ({
   currentRequest: mockState.currentRequest
 }));
 
+vi.mock("encore.dev/config", () => ({
+  secret: (name: string) => {
+    return () => {
+      const value = process.env[name]?.trim();
+      if (!value) {
+        throw new Error(`secret ${name} is not set`);
+      }
+      return value;
+    };
+  }
+}));
+
 vi.mock("encore.dev/storage/sqldb", () => ({
   SQLDatabase: mockState.MockSQLDatabase
 }));
@@ -325,9 +337,9 @@ beforeEach(() => {
   mockState.reset();
   process.env.NODE_ENV = "test";
   delete process.env.TEST_IDEMPOTENCY_KEY;
-  delete process.env.TEMPORAL_ADDRESS;
-  delete process.env.TEMPORAL_NAMESPACE;
-  delete process.env.TEMPORAL_TASK_QUEUE;
+  process.env.TEMPORAL_ADDRESS = "temporal.test:7233";
+  process.env.TEMPORAL_NAMESPACE = "test-namespace";
+  process.env.TEMPORAL_TASK_QUEUE = "billing-periods";
 });
 
 afterEach(() => {

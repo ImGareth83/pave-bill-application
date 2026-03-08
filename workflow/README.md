@@ -18,9 +18,9 @@ orchestration.
 
 ## Environment
 - `BACKEND_API_BASE_URL`: base URL for the backend API, e.g. `http://127.0.0.1:4000`
-- `TEMPORAL_ADDRESS`: Temporal server address, defaults to `localhost:7233`
-- `TEMPORAL_API_KEY`: optional Temporal Cloud API key; when set, the worker connects with TLS enabled
-- `TEMPORAL_NAMESPACE`: Temporal namespace, defaults to `default`
+- `TEMPORAL_ADDRESS`: required Temporal server address
+- `TEMPORAL_API_KEY`: Temporal Cloud API key should be configured as an Encore secret; when set, the worker connects with TLS enabled
+- `TEMPORAL_NAMESPACE`: required Temporal namespace
 - `TEMPORAL_TASK_QUEUE`: Task queue name, defaults to `billing-periods`
 
 ## Run
@@ -28,6 +28,8 @@ orchestration.
 cd /Users/gareth/workspace/pave-bill-application/workflow
 npm install
 export BACKEND_API_BASE_URL='http://127.0.0.1:4000'
+export TEMPORAL_ADDRESS='localhost:7233'
+export TEMPORAL_NAMESPACE='default'
 encore run
 ```
 
@@ -35,6 +37,8 @@ Direct worker entrypoint:
 ```bash
 cd /Users/gareth/workspace/pave-bill-application/workflow
 export BACKEND_API_BASE_URL='http://127.0.0.1:4000'
+export TEMPORAL_ADDRESS='localhost:7233'
+export TEMPORAL_NAMESPACE='default'
 npm run worker
 ```
 
