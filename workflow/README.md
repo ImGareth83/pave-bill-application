@@ -3,6 +3,8 @@
 This package contains the Temporal workflow definitions and the standalone worker runtime
 for bill-period orchestration.
 
+This README documents the standalone worker deployment model.
+
 ## Deployment Model
 - Workflow logic lives in this package.
 - The worker is deployed as a long-lived Node process on AWS EC2.
