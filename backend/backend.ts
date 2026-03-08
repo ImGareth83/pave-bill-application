@@ -4,6 +4,7 @@ import {
   Client as TemporalClient,
   Connection as TemporalConnection,
   WorkflowExecutionAlreadyStartedError,
+  WorkflowNotFoundError,
   WorkflowUpdateFailedError,
   WorkflowUpdateRPCTimeoutOrCancelledError,
   ApplicationFailure
@@ -1281,6 +1282,14 @@ function mapTemporalError(error: unknown): APIError {
 
   if (error instanceof WorkflowUpdateRPCTimeoutOrCancelledError) {
     return APIError.unavailable("workflow update timed out");
+  }
+
+  if (error instanceof WorkflowNotFoundError) {
+    if (error.message.toLowerCase().includes("already completed")) {
+      return invalid("BillNotOpen", "bill is no longer open for mutations");
+    }
+
+    return APIError.notFound(error.message).withDetails({ code: "WorkflowNotFound" });
   }
 
   if (error instanceof WorkflowExecutionAlreadyStartedError) {

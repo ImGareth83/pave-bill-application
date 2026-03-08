@@ -596,6 +596,32 @@ describe("backend temporal integration", () => {
     });
   });
 
+  test("completed workflow update failures are mapped back to API errors", async () => {
+    process.env.TEST_IDEMPOTENCY_KEY = "idem-error-completed";
+    const { addLineItem } = await loadBackend();
+    const { WorkflowNotFoundError } = await import("@temporalio/client");
+
+    mockState.temporal.executeUpdate.mockRejectedValueOnce(
+      new WorkflowNotFoundError(
+        "workflow execution already completed",
+        "bill/bill_001",
+        undefined
+      )
+    );
+
+    await expect(
+      addLineItem({
+        billId: "bill_001",
+        description: "Late Fee",
+        amount: "1.00",
+        currency: "USD"
+      })
+    ).rejects.toMatchObject({
+      details: { code: "BillNotOpen" },
+      message: "bill is no longer open for mutations"
+    });
+  });
+
   test("completeBill now rejects until the workflow has completed the bill", async () => {
     const { completeBill } = await loadBackend();
 
