@@ -1256,21 +1256,27 @@ async function executeBillWorkflowUpdate<T>(
 }
 
 function mapTemporalError(error: unknown): APIError {
-  if (error instanceof WorkflowUpdateFailedError && error.cause instanceof ApplicationFailure) {
-    const detail = error.cause.details?.[0];
-    const code =
-      detail && typeof detail === "object" && "code" in detail ? String(detail.code) : undefined;
-    const message = error.cause.message || "workflow update failed";
+  if (error instanceof WorkflowUpdateFailedError) {
+    const failure = extractTemporalFailure(error.cause);
+    const code = failure.code;
+    const type = failure.type;
+    const message = failure.message || error.message || "workflow update failed";
 
-    if (code && code.endsWith("NotFound")) {
-      return APIError.notFound(message).withDetails({ code });
+    if ((code && code.endsWith("NotFound")) || type === "NotFound") {
+      return APIError.notFound(message).withDetails({ code: code ?? "WorkflowNotFound" });
     }
 
-    if (code && code.includes("Conflict")) {
-      return conflict(code, message);
+    if ((code && code.includes("Conflict")) || type === "Conflict") {
+      return conflict(code ?? "WorkflowConflict", message);
     }
 
-    return invalid(code ?? "WorkflowUpdateRejected", message);
+    if (code || type === "InvalidArgument") {
+      return invalid(code ?? "WorkflowUpdateRejected", message);
+    }
+
+    if (error.cause instanceof ApplicationFailure) {
+      return invalid(code ?? "WorkflowUpdateRejected", message);
+    }
   }
 
   if (error instanceof WorkflowUpdateRPCTimeoutOrCancelledError) {
@@ -1294,4 +1300,63 @@ function logTemporalFailure(
     errorName: error instanceof Error ? error.name : typeof error,
     errorMessage: error instanceof Error ? error.message : String(error)
   });
+}
+
+function extractTemporalFailure(error: unknown): {
+  code?: string;
+  message?: string;
+  type?: string;
+} {
+  const queue: unknown[] = [error];
+  const seen = new Set<unknown>();
+  let message: string | undefined;
+  let type: string | undefined;
+  let code: string | undefined;
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current || seen.has(current) || typeof current !== "object") {
+      continue;
+    }
+    seen.add(current);
+
+    const record = current as {
+      message?: unknown;
+      type?: unknown;
+      details?: unknown;
+      cause?: unknown;
+      failure?: unknown;
+      applicationFailureInfo?: unknown;
+    };
+
+    if (!message && typeof record.message === "string" && record.message.trim()) {
+      message = record.message;
+    }
+
+    if (!type && typeof record.type === "string" && record.type.trim()) {
+      type = record.type;
+    }
+
+    const extractedCode = extractFailureCode(record.details);
+    if (!code && extractedCode) {
+      code = extractedCode;
+    }
+
+    queue.push(record.cause, record.failure, record.applicationFailureInfo);
+  }
+
+  return { code, message, type };
+}
+
+function extractFailureCode(details: unknown): string | undefined {
+  if (Array.isArray(details) && details.length > 0) {
+    return extractFailureCode(details[0]);
+  }
+
+  if (!details || typeof details !== "object") {
+    return undefined;
+  }
+
+  const maybeCode = (details as { code?: unknown }).code;
+  return typeof maybeCode === "string" && maybeCode.trim() ? maybeCode : undefined;
 }

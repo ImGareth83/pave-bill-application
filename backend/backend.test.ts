@@ -570,6 +570,32 @@ describe("backend temporal integration", () => {
     });
   });
 
+  test("serialized workflow application failures are mapped back to API errors", async () => {
+    process.env.TEST_IDEMPOTENCY_KEY = "idem-error-serialized";
+    const { addLineItem } = await loadBackend();
+    const { WorkflowUpdateFailedError } = await import("@temporalio/client");
+
+    mockState.temporal.executeUpdate.mockRejectedValueOnce(
+      new WorkflowUpdateFailedError("workflow update failed", {
+        message: "bill is no longer open for mutations",
+        type: "InvalidArgument",
+        details: [{ code: "BillNotOpen" }]
+      } as unknown as Error)
+    );
+
+    await expect(
+      addLineItem({
+        billId: "bill_001",
+        description: "Late Fee",
+        amount: "1.00",
+        currency: "USD"
+      })
+    ).rejects.toMatchObject({
+      details: { code: "BillNotOpen" },
+      message: "bill is no longer open for mutations"
+    });
+  });
+
   test("completeBill now rejects until the workflow has completed the bill", async () => {
     const { completeBill } = await loadBackend();
 
