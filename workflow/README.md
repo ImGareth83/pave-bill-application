@@ -8,7 +8,7 @@ for bill-period orchestration.
 - The worker is deployed as a long-lived Node process on AWS EC2.
 - Temporal Cloud provides workflow state, task queues, and update delivery.
 - The worker calls backend-owned persistence APIs over HTTPS.
-- The worker is no longer expected to run inside Encore Cloud.
+- This package no longer includes an Encore app/service entrypoint.
 
 ## Requirement Alignment
 - One workflow execution runs per bill: `bill/<billId>`.
@@ -128,7 +128,7 @@ npm test
 - Backend owns all SQL writes and idempotency records for both public endpoints and workflow persistence endpoints.
 - `createBill` is intentionally resumable rather than atomic across SQL commit and workflow start. Bills persist with `workflow_state='NOT_STARTED'` until backend successfully starts the Temporal workflow and marks them `STARTED`.
 - Activity tests mock backend API calls instead of connecting to Postgres.
-- The worker is intended to run outside Encore runtime, so configuration is read from plain environment variables.
+- The worker is intended to run outside Encore runtime, so configuration is read from plain environment variables only.
 
 ## Accepted Risks
 - Because the worker is external and invokes backend APIs over HTTP, the backend `/workflow/*` persistence endpoints are intentionally public.
