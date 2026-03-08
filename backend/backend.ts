@@ -283,7 +283,7 @@ export const addLineItem = api(
 );
 
 export const workflowAddLineItem = api(
-  { expose: false, auth: false, method: "POST", path: "/workflow/bills/:billId/line-items" },
+  { expose: true, auth: false, method: "POST", path: "/workflow/bills/:billId/line-items" },
   async (params: WorkflowAddLineItemParams): Promise<AddLineItemResponse> => {
     return withIdempotency<AddLineItemResponse>(
       `workflow_add_line_item:${params.billId}`,
@@ -336,7 +336,7 @@ export const rejectLineItem = api(
 
 export const workflowRejectLineItem = api(
   {
-    expose: false,
+    expose: true,
     auth: false,
     method: "POST",
     path: "/workflow/bills/:billId/line-items/:lineItemId/reject"
@@ -406,7 +406,7 @@ export const completeBill = api(
 );
 
 export const workflowCloseAndCompleteBill = api(
-  { expose: false, auth: false, method: "POST", path: "/workflow/bills/:billId/finalize" },
+  { expose: true, auth: false, method: "POST", path: "/workflow/bills/:billId/finalize" },
   async (params: WorkflowCloseAndCompleteBillParams): Promise<{
     close: CloseBillResponse;
     complete: CompleteBillResponse;
