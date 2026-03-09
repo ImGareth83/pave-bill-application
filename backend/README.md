@@ -6,6 +6,15 @@ Architecture diagram:
 - [diagrams.drawio.pdf](/Users/gareth/workspace/pave-bill-application/diagrams.drawio.pdf)
 - Source: [diagrams.drawio](/Users/gareth/workspace/pave-bill-application/diagrams.drawio)
 
+## Screenshots
+Temporal Cloud workflow timeline for completed bill `019ccc84-2441-735e-b12a-ff1a51b9c67f`:
+
+![Temporal Cloud completed bill workflow timeline](../completed_temporal_billing_periods_screenshot.png)
+
+Encore Cloud trace explorer for the backend staging environment:
+
+![Encore Cloud backend trace explorer](../deployed_encore_backend.png)
+
 ## Deployment Model
 - Backend API runs on Encore Cloud.
 - Temporal orchestration runs on Temporal Cloud.
