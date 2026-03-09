@@ -3,6 +3,10 @@
 This package contains the Temporal workflow definitions and the standalone worker runtime
 for bill-period orchestration.
 
+Architecture diagram:
+- [diagrams.drawio.pdf](/Users/gareth/workspace/pave-bill-application/diagrams.drawio.pdf)
+- Source: [diagrams.drawio](/Users/gareth/workspace/pave-bill-application/diagrams.drawio)
+
 This README documents the standalone worker deployment model.
 
 ## Deployment Model

@@ -2,6 +2,10 @@
 
 This service is the public Encore API for bill management.
 
+Architecture diagram:
+- [diagrams.drawio.pdf](/Users/gareth/workspace/pave-bill-application/diagrams.drawio.pdf)
+- Source: [diagrams.drawio](/Users/gareth/workspace/pave-bill-application/diagrams.drawio)
+
 ## Deployment Model
 - Backend API runs on Encore Cloud.
 - Temporal orchestration runs on Temporal Cloud.
